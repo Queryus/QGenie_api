@@ -17,3 +17,36 @@ dependencies = [
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.12.2"
+black = "^25.1.0"
+pre-commit = "^4.2.0"
+
+
+# ----------------------------
+# Ruff 설정
+# ----------------------------
+[tool.ruff]
+line-length = 120
+exclude = [
+    ".git",
+    "__pycache__",
+    "tests/*"
+]
+
+[tool.ruff.lint]
+ignore = ["E501"] # 줄 길이 경고는 Black이 관리
+select = ["I", "E", "F", "W", "C90", "B", "UP"]
+
+# ----------------------------
+# Black 설정
+# ----------------------------
+[tool.black]
+line-length = 120
+target-version = ["py311"]
+
+# ----------------------------
+# Pre-commit 설정은 별도 파일에
+# ----------------------------
+# `.pre-commit-config.yaml` 파일도 함께 작성해야 동작합니다.
