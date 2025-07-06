@@ -33,8 +33,8 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 - 
           echo 'Poetry 설치 완료'
 
-          # 환경변수 경로에 Poetry 추가
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          # PATH에 직접 추가
+          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
 
           # 디버깅을 위해 Poetry 경로와 버전 출력
           echo "Poetry 위치: $(which poetry || echo 'Poetry not found')"
