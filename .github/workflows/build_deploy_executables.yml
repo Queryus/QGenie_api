@@ -24,16 +24,20 @@ jobs:
         shell: bash
         run: |
           echo "Installing Poetry..."
-          curl -sSL https://install.python-poetry.org | python3 - 
+          curl -sSL https://install.python-poetry.org | python3 -
           echo 'Poetry 설치 완료'
 
-          # PATH에 직접 추가
-          echo "PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+          # OS별 Poetry 경로를 PATH에 추가
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            echo "C:/Users/runneradmin/AppData/Roaming/Python/Scripts" >> $GITHUB_PATH
+          else
+            echo "$HOME/.local/bin" >> $GITHUB_PATH
+          fi
 
-          # 디버깅을 위해 Poetry 경로와 버전 출력
+          # 디버깅 출력
           echo "Poetry 위치: $(which poetry || echo 'Poetry not found')"
           echo "Poetry 버전:"
-          $HOME/.local/bin/poetry --version || echo 'Poetry 실행 실패'
+          poetry --version || echo 'Poetry 실행 실패'
 
       # 3. Poetry를 사용하여 파이썬 환경을 설정합니다.
       - name: Set up Python with Poetry
