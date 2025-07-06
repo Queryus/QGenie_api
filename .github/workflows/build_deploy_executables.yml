@@ -21,6 +21,7 @@ jobs:
 
       # 2. Poetry 설치 (디버깅 출력 추가)
       - name: Install Poetry
+        shell: bash
         run: |
           echo "Installing Poetry..."
           curl -sSL https://install.python-poetry.org | python3 - 
