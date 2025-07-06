@@ -19,14 +19,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Poetry를 사용하여 파이썬 환경을 설정합니다.
-      - name: Set up Python with Poetry
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "poetry"
-
-      # 3. Poetry 설치 (디버깅 출력 추가)
+      # 2. Poetry 설치 (디버깅 출력 추가)
       - name: Install Poetry
         run: |
           echo "Installing Poetry..."
@@ -40,6 +33,13 @@ jobs:
           echo "Poetry 위치: $(which poetry || echo 'Poetry not found')"
           echo "Poetry 버전:"
           $HOME/.local/bin/poetry --version || echo 'Poetry 실행 실패'
+
+      # 3. Poetry를 사용하여 파이썬 환경을 설정합니다.
+      - name: Set up Python with Poetry
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "poetry"
 
       # 4. Poetry 의존성(PyInstaller 포함)을 설치합니다.
       - name: Install Poetry dependencies
