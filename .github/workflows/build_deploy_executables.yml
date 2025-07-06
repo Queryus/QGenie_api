@@ -29,7 +29,7 @@ jobs:
       # 3. Poetry 설치
       - name: Install Poetry
         run: |
-          curl -sSL https://install.python-poetry.org | python3.11 -
+          curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       # 4. Poetry 의존성(PyInstaller 포함)을 설치합니다.
