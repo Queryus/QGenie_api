@@ -26,11 +26,17 @@ jobs:
           python-version: "3.11"
           cache: "poetry"
 
-      # 3. Poetry 의존성(PyInstaller 포함)을 설치합니다.
+      # 3. Poetry 설치
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3.11 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # 4. Poetry 의존성(PyInstaller 포함)을 설치합니다.
       - name: Install Poetry dependencies
         run: poetry install --no-root
 
-      # 4. OS에 따라 실행 파일의 이름(.exe 확장자 등)을 결정합니다.
+      # 5. OS에 따라 실행 파일의 이름(.exe 확장자 등)을 결정합니다.
       - name: Set executable name
         id: set_name
         shell: bash
