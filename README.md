@@ -31,8 +31,9 @@
 2.  **저장소 복제**
 
     ```bash
-    git clone https://github.com/AskQL/askql_api.git
-    cd askql_api # 복제된 저장소 디렉토리로 이동
+    git clone https://github.com/Queryus/QGenie_api.git
+    cd app # 복제된 저장소 디렉토리로 이동
+
     ```
 
 3.  **Poetry 프로젝트 초기화 및 종속성 설치**
