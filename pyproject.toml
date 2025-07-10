@@ -1,9 +1,9 @@
 [project]
-name = "askql-api"
+name = "app"
 version = "0.1.0"
 description = ""
 authors = [
-    {name = "AskQL Team"}
+    {name = "Queryus"}
 ]
 license = {text = "MIT"}
 readme = "README.md"
