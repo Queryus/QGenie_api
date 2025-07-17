@@ -14,12 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send Pipeline Start Notification
-        uses: antoinezanardi/discord-webhook-action@v2
-        with:
-          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          color: "#31a6f5" # 노란색
-          username: "파이프라인 봇"
-          description: "🔷🔷🔷  **${{ github.ref_name }}** 릴리즈 배포 파이프라인을 시작합니다.  🔷🔷🔷"
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+            "username": "파이프라인 봇",
+            "embeds": [{
+              "description": "🔷🔷🔷  **${{ github.ref_name }}** 릴리즈 배포 파이프라인을 시작합니다.  🔷🔷🔷",
+              "color": 3253045
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
   # ==================================
   #    실행 파일 빌드
   # ==================================
@@ -129,31 +133,45 @@ jobs:
     steps:
       - name: Send Success Notification
         if: needs.deploy.result == 'success'
-        uses: antoinezanardi/discord-webhook-action@v2
-        with:
-          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          color: "#2ecc71" # 초록색
-          username: "파이프라인 봇"
-          title: "🎉 New Release: ${{ github.ref_name }}"
-          url: ${{ github.event.release.html_url }}
-          description: "✅✅✅  **${{ github.ref_name }}** 릴리즈 배포가 성공적으로 완료되었습니다!  ✅✅✅"
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+            "username": "파이프라인 봇",
+            "embeds": [{
+              "title": "🎉 New Release: ${{ github.ref_name }}",
+              "url": "${{ github.event.release.html_url }}",
+              "description": "✅✅✅  **${{ github.ref_name }}** 릴리즈 배포가 성공적으로 완료되었습니다!  ✅✅✅",
+              "color": 3066993
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Send Failure Notification
-        if: needs.deploy.result == 'failure'
-        uses: antoinezanardi/discord-webhook-action@v2
-        with:
-          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          color: "#e74c3c" # 빨간색
-          username: "파이프라인 봇"
-          description: "❌❌❌  **${{ github.ref_name }}** 릴리즈 배포 중 오류가 발생했습니다.  ❌❌❌"
-          url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        if: contains(needs.*.result, 'failure')
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+            "username": "파이프라인 봇",
+            "embeds": [{
+              "title": "릴리즈 배포 실패",
+              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "description": "❌❌❌  **${{ github.ref_name }}** 릴리즈 배포 중 오류가 발생했습니다.  ❌❌❌",
+              "color": 15158332
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Send Skipped or Cancelled Notification
-        if: needs.deploy.result == 'skipped' || needs.deploy.result == 'cancelled'
-        uses: antoinezanardi/discord-webhook-action@v2
-        with:
-          webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          color: "#fcf56f" # 노란색
-          username: "파이프라인 봇"
-          description: "🟡🟡🟡  **${{ github.ref_name }}** 릴리즈 배포가 완료되지 않았습니다. (상태: `${{ needs.deploy.result }}`)\n이전 단계(Build)에서 문제가 발생했을 수 있습니다.  🟡🟡🟡"
-          url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        if: contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+            "username": "파이프라인 봇",
+            "embeds": [{
+              "title": "릴리즈 배포 미완료",
+              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "description": "🟡🟡🟡  **${{ github.ref_name }}** 릴리즈 배포가 완료되지 않았습니다. (상태: 취소 또는 건너뜀)\n이전 단계에서 문제가 발생했을 수 있습니다.  🟡🟡🟡",
+              "color": 16577903
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
