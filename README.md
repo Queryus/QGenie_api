@@ -1,6 +1,6 @@
-# AskQL API
+# QGenie API
 
-이 프로젝트는 AskQL 서비스의 백엔드 API를 제공합니다. FastAPI를 기반으로 구축되었으며, 효율적이고 확장 가능한 API를 목표로 합니다.
+이 프로젝트는 QGenie 서비스의 백엔드 API를 제공합니다. FastAPI를 기반으로 구축되었으며, 효율적이고 확장 가능한 API를 목표로 합니다.
 
 ---
 
