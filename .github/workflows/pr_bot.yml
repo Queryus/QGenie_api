@@ -1,0 +1,87 @@
+# .github/workflows/pr_bot.yml
+name: Pull Request Bot
+
+on:
+  # Pull Request 관련 이벤트 발생 시
+  pull_request:
+    types: [opened, closed, reopened, synchronize]
+  issue_comment:
+    types: [created]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      # -------------------------
+      #   생성/동기화 알림
+      # -------------------------
+      - name: Send PR Created Notification
+        if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize')
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+            "username": "GitHub PR 봇",
+            "embeds": [{
+              "title": "Pull Request #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}",
+              "description": "🔷🔷🔷  **${{ github.actor }}**님이 Pull Request를 생성하거나 업데이트했습니다.  �🔷🔷",
+              "url": "${{ github.event.pull_request.html_url }}",
+              "color": 3253045
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      # -------------------------
+      #   댓글 알림
+      # -------------------------
+      - name: Send PR Comment Notification
+        if: github.event_name == 'issue_comment' && github.event.issue.pull_request
+        run: |
+          COMMENT_BODY=$(echo "${{ github.event.comment.body }}" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{
+            \"username\": \"GitHub 댓글 봇\",
+            \"embeds\": [{
+              \"title\": \"New Comment on PR #${{ github.event.issue.number }}\",
+              \"description\": \"🟠🟠🟠  **${{ github.actor }}**님의 새 댓글: \\n${COMMENT_BODY}  🟠🟠🟠\",
+              \"url\": \"${{ github.event.comment.html_url }}\",
+              \"color\": 15105634
+            }]
+          }" \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      # -------------------------
+      #   머지(Merge) 알림
+      # -------------------------
+      - name: Send PR Merged Notification
+        if: github.event.action == 'closed' && github.event.pull_request.merged == true
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+            "username": "GitHub Merge 봇",
+            "embeds": [{
+              "title": "Pull Request #${{ github.event.pull_request.number }} Merged!",
+              "description": "✅✅✅  **${{ github.actor }}**님이 **${{ github.event.pull_request.title }}** PR을 머지했습니다.  ✅✅✅",
+              "url": "${{ github.event.pull_request.html_url }}",
+              "color": 5167665
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      # -------------------------
+      #   닫힘(Close) 알림
+      # -------------------------
+      - name: Send PR Closed Notification
+        if: github.event.action == 'closed' && github.event.pull_request.merged == false
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+            "username": "GitHub PR 봇",
+            "embeds": [{
+              "title": "Pull Request #${{ github.event.pull_request.number }} Closed",
+              "description": "❌❌❌  **${{ github.actor }}**님이 **${{ github.event.pull_request.title }}** PR을 닫았습니다.  ❌❌❌",
+              "url": "${{ github.event.pull_request.html_url }}",
+              "color": 15082698
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+  �
