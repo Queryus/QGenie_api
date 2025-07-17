@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send Pipeline Start Notification
-        uses: tsg-bot/discord-webhook-action@v1.1.1
+        uses: antoinezanardi/discord-webhook-action@v2
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           color: "#31a6f5" # 노란색
@@ -129,7 +129,7 @@ jobs:
     steps:
       - name: Send Success Notification
         if: needs.deploy.result == 'success'
-        uses: tsg-bot/discord-webhook-action@v1.1.1
+        uses: antoinezanardi/discord-webhook-action@v2
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           color: "#2ecc71" # 초록색
@@ -140,7 +140,7 @@ jobs:
 
       - name: Send Failure Notification
         if: needs.deploy.result == 'failure'
-        uses: tsg-bot/discord-webhook-action@v1.1.1
+        uses: antoinezanardi/discord-webhook-action@v2
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           color: "#e74c3c" # 빨간색
@@ -150,7 +150,7 @@ jobs:
 
       - name: Send Skipped or Cancelled Notification
         if: needs.deploy.result == 'skipped' || needs.deploy.result == 'cancelled'
-        uses: tsg-bot/discord-webhook-action@v1.1.1
+        uses: antoinezanardi/discord-webhook-action@v2
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           color: "#fcf56f" # 노란색

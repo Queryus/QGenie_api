@@ -17,7 +17,7 @@ jobs:
       # -------------------------
       - name: Send PR Created Notification
         if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'synchronize')
-        uses: tsg-bot/discord-webhook-action@v1.1.1
+        uses: antoinezanardi/discord-webhook-action@v2
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           title: "Pull Request #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
@@ -31,7 +31,7 @@ jobs:
       # -------------------------
       - name: Send PR Comment Notification
         if: github.event_name == 'issue_comment' && github.event.issue.pull_request
-        uses: tsg-bot/discord-webhook-action@v1.1.1
+        uses: antoinezanardi/discord-webhook-action@v2
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           title: "New Comment on PR #${{ github.event.issue.number }}"
@@ -45,7 +45,7 @@ jobs:
       # -------------------------
       - name: Send PR Merged Notification
         if: github.event.action == 'closed' && github.event.pull_request.merged == true
-        uses: tsg-bot/discord-webhook-action@v1.1.1
+        uses: antoinezanardi/discord-webhook-action@v2
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           title: "Pull Request #${{ github.event.pull_request.number }} Merged!"
@@ -59,7 +59,7 @@ jobs:
       # -------------------------
       - name: Send PR Closed Notification
         if: github.event.action == 'closed' && github.event.pull_request.merged == false
-        uses: tsg-bot/discord-webhook-action@v1.1.1
+        uses: antoinezanardi/discord-webhook-action@v2
         with:
           webhook_url: ${{ secrets.DISCORD_WEBHOOK_URL }}
           title: "Pull Request #${{ github.event.pull_request.number }} Closed"
