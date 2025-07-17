@@ -34,6 +34,8 @@ temp/
 .DS_Store            # macOS에서 생성되는 메타파일
 Thumbs.db            # Windows에서 생성되는 파일
 desktop.ini          # Windows 바탕화면 설정 파일
+.idea
+.vscode
 
 # 테스트 커버리지 리포트
 htmlcov/
