@@ -23,7 +23,7 @@ jobs:
             "username": "GitHub PR 봇",
             "embeds": [{
               "title": "Pull Request #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}",
-              "description": "🔷🔷🔷  **${{ github.actor }}**님이 Pull Request를 생성하거나 업데이트했습니다.  �🔷🔷",
+              "description": "🔷🔷🔷  **${{ github.actor }}**님이 Pull Request를 생성하거나 업데이트했습니다.  🔷🔷🔷",
               "url": "${{ github.event.pull_request.html_url }}",
               "color": 3253045
             }]
