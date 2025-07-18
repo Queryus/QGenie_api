@@ -1,6 +1,6 @@
-# AskQL API
+# QGenie API
 
-이 프로젝트는 AskQL 서비스의 백엔드 API를 제공합니다. FastAPI를 기반으로 구축되었으며, 효율적이고 확장 가능한 API를 목표로 합니다.
+이 프로젝트는 QGenie 서비스의 백엔드 API를 제공합니다. FastAPI를 기반으로 구축되었으며, 효율적이고 확장 가능한 API를 목표로 합니다.
 
 ---
 
@@ -46,10 +46,10 @@
 
     **Poetry `init` 시 질문에 대한 답변:**
 
-    - `Package name`: `askql-api`
+    - `Package name`: `QGenie-api`
     - `Version`: `0.1.0`
     - `Description`: `""`
-    - `Author`: `AskQL Team`
+    - `Author`: `Queryus`
     - `License`: `MIT`
     - `Compatible Python versions`: `>=3.11`
     - `Would you like to define your main dependencies interactively?`: `no`
