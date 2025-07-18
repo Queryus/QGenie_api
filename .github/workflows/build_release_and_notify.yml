@@ -74,6 +74,7 @@ jobs:
 
       # 6. PyInstaller를 사용해 파이썬 코드를 실행 파일로 만듭니다.
       - name: Build executable with PyInstaller
+        shell: bash
         run: |
           poetry run pyinstaller \
             --clean \
