@@ -23,9 +23,9 @@ jobs:
             "username": "GitHub PR 봇",
             "embeds": [{
               "title": "Pull Request #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}",
-              "description": "🔷🔷🔷  **${{ github.actor }}**님이 Pull Request를 생성하거나 업데이트했습니다.  🔷🔷🔷",
+              "description": "🔷 **${{ github.actor }}**님이 Pull Request를 생성하거나 업데이트했습니다. 🔷",
               "url": "${{ github.event.pull_request.html_url }}",
-              "color": 3253045
+              "color": 2243312
             }]
           }' \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -38,15 +38,15 @@ jobs:
         run: |
           COMMENT_BODY=$(echo "${{ github.event.comment.body }}" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
           curl -X POST -H "Content-Type: application/json" \
-          -d "{
-            \"username\": \"GitHub 댓글 봇\",
-            \"embeds\": [{
-              \"title\": \"New Comment on PR #${{ github.event.issue.number }}\",
-              \"description\": \"🟠🟠🟠  **${{ github.actor }}**님의 새 댓글: \\n${COMMENT_BODY}  🟠🟠🟠\",
-              \"url\": \"${{ github.event.comment.html_url }}\",
-              \"color\": 15105634
+          -d '{
+            "username": "GitHub 댓글 봇",
+            "embeds": [{
+              "title": "New Comment on PR #${{ github.event.issue.number }}",
+              "description": "🟠 **${{ github.actor }}**님의 새 댓글: \n${COMMENT_BODY} 🟠",
+              "url": "${{ github.event.comment.html_url }}",
+              "color": 15105570
             }]
-          }" \
+          }' \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       # -------------------------
@@ -60,9 +60,9 @@ jobs:
             "username": "GitHub Merge 봇",
             "embeds": [{
               "title": "Pull Request #${{ github.event.pull_request.number }} Merged!",
-              "description": "✅✅✅  **${{ github.actor }}**님이 **${{ github.event.pull_request.title }}** PR을 머지했습니다.  ✅✅✅",
+              "description": "✅ **${{ github.actor }}**님이 **${{ github.event.pull_request.title }}** PR을 머지했습니다. ✅",
               "url": "${{ github.event.pull_request.html_url }}",
-              "color": 5167665
+              "color": 5167473
             }]
           }' \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -78,9 +78,9 @@ jobs:
             "username": "GitHub PR 봇",
             "embeds": [{
               "title": "Pull Request #${{ github.event.pull_request.number }} Closed",
-              "description": "❌❌❌  **${{ github.actor }}**님이 **${{ github.event.pull_request.title }}** PR을 닫았습니다.  ❌❌❌",
+              "description": "❌ **${{ github.actor }}**님이 **${{ github.event.pull_request.title }}** PR을 닫았습니다. ❌",
               "url": "${{ github.event.pull_request.html_url }}",
-              "color": 15082698
+              "color": 15219495
             }]
           }' \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
