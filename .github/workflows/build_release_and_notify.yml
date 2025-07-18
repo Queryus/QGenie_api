@@ -1,0 +1,177 @@
+# .github/workflows/build_release_and_notify.yml
+
+name: Build and Deploy Executables
+
+on:
+  release:
+    types: [published] # Release가 'published' 상태가 될 때 트리거
+
+jobs:
+  # ==================================
+  #    파이프라인 시작 알림
+  # ==================================
+  start:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Pipeline Start Notification
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+            "username": "API 배포 봇",
+            "embeds": [{
+              "description": "**${{ github.ref_name }}** API 배포를 시작합니다.",
+              "color": 2243312
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+  # ==================================
+  #    실행 파일 빌드
+  # ==================================
+  build:
+    needs: start
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # 1. Git 리포지토리의 소스 코드를 가져옵니다.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Poetry 설치 (디버깅 출력 추가)
+      - name: Install Poetry
+        shell: bash
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            echo "C:/Users/runneradmin/AppData/Roaming/Python/Scripts" >> $GITHUB_PATH
+          else
+            echo "$HOME/.local/bin" >> $GITHUB_PATH
+          fi
+
+      # 3. Poetry를 사용하여 파이썬 환경을 설정합니다.
+      - name: Set up Python with Poetry
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "poetry"
+
+      # 4. Poetry 의존성(PyInstaller 포함)을 설치합니다.
+      - name: Install Poetry dependencies
+        run: poetry install --no-root
+
+      # 5. OS에 따라 실행 파일의 이름(.exe 확장자 등)을 결정합니다.
+      - name: Set executable name
+        id: set_name
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" == "macOS" ]; then
+            echo "EXE_NAME=qgenie-api" >> $GITHUB_ENV
+          elif [ "${{ runner.os }}" == "Windows" ]; then
+            echo "EXE_NAME=qgenie-api.exe" >> $GITHUB_ENV
+          fi
+
+      # 6. PyInstaller를 사용해 파이썬 코드를 실행 파일로 만듭니다.
+      - name: Build executable with PyInstaller
+        run: poetry run pyinstaller main.py --name ${{ env.EXE_NAME }} --onefile --noconsole
+
+      # 7. 빌드된 실행 파일을 다음 단계(deploy)에서 사용할 수 있도록 아티팩트로 업로드합니다.
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: executable-${{ runner.os }}
+          path: dist/${{ env.EXE_NAME }}
+          retention-days: 1
+
+  # ==================================
+  #    배포
+  # ==================================
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout App Repository
+        uses: actions/checkout@v4
+        with:
+          repository: Queryus/QGenie_app
+          token: ${{ secrets.PAT_FOR_FRONT_REPO }}
+          ref: develop
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Organize files
+        run: |
+          mkdir -p resources/mac resources/win
+          mv artifacts/executable-macOS/qgenie-api resources/mac/
+          mv artifacts/executable-Windows/qgenie-api.exe resources/win/
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add .
+          if git diff-index --quiet HEAD; then
+            echo "No changes to commit to QGenie APP repository."
+          else
+            git commit -m "feat: API 실행 파일 업데이트 (${{ github.ref_name }})"
+            git push
+          fi
+
+  # ==================================
+  #    파이프라인 최종 결과 알림
+  # ==================================
+  finish:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Send Success Notification
+        if: needs.deploy.result == 'success'
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+            "username": "API 배포 봇",
+            "embeds": [{
+              "title": "New API Release: ${{ github.ref_name }}",
+              "url": "${{ github.event.release.html_url }}",
+              "description": "**${{ github.ref_name }}** API 배포가 성공적으로 완료되었습니다!",
+              "color": 5167473
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Send Failure Notification
+        if: contains(needs.*.result, 'failure')
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+            "username": "API 배포 봇",
+            "embeds": [{
+              "title": "API 배포 실패",
+              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "description": "**${{ github.ref_name }}** API 배포 중 오류가 발생했습니다.",
+              "color": 15219495
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Send Skipped or Cancelled Notification
+        if: contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped')
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d '{
+            "username": "API 배포 봇",
+            "embeds": [{
+              "title": "API 배포 미완료",
+              "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "description": "**${{ github.ref_name }}** API 배포가 완료되지 않았습니다. (상태: 취소 또는 건너뜀)\n이전 단계에서 문제가 발생했을 수 있습니다.",
+              "color": 16577629
+            }]
+          }' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
