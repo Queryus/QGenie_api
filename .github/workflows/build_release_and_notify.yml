@@ -17,9 +17,9 @@ jobs:
         run: |
           curl -X POST -H "Content-Type: application/json" \
           -d '{
-            "username": "파이프라인 봇",
+            "username": "API 배포 봇",
             "embeds": [{
-              "description": "**${{ github.ref_name }}** 릴리즈 배포 파이프라인을 시작합니다.",
+              "description": "**${{ github.ref_name }}** API 배포를 시작합니다.",
               "color": 2243312
             }]
           }' \
@@ -136,11 +136,11 @@ jobs:
         run: |
           curl -X POST -H "Content-Type: application/json" \
           -d '{
-            "username": "파이프라인 봇",
+            "username": "API 배포 봇",
             "embeds": [{
-              "title": "🎉 New Release: ${{ github.ref_name }}",
+              "title": "New API Release: ${{ github.ref_name }}",
               "url": "${{ github.event.release.html_url }}",
-              "description": "**${{ github.ref_name }}** 릴리즈 배포가 성공적으로 완료되었습니다!",
+              "description": "**${{ github.ref_name }}** API 배포가 성공적으로 완료되었습니다!",
               "color": 5167473
             }]
           }' \
@@ -151,11 +151,11 @@ jobs:
         run: |
           curl -X POST -H "Content-Type: application/json" \
           -d '{
-            "username": "파이프라인 봇",
+            "username": "API 배포 봇",
             "embeds": [{
-              "title": "릴리즈 배포 실패",
+              "title": "API 배포 실패",
               "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-              "description": "**${{ github.ref_name }}** 릴리즈 배포 중 오류가 발생했습니다.",
+              "description": "**${{ github.ref_name }}** API 배포 중 오류가 발생했습니다.",
               "color": 15219495
             }]
           }' \
@@ -166,11 +166,11 @@ jobs:
         run: |
           curl -X POST -H "Content-Type: application/json" \
           -d '{
-            "username": "파이프라인 봇",
+            "username": "API 배포 봇",
             "embeds": [{
-              "title": "릴리즈 배포 미완료",
+              "title": "API 배포 미완료",
               "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
-              "description": "**${{ github.ref_name }}** 릴리즈 배포가 완료되지 않았습니다. (상태: 취소 또는 건너뜀)\n이전 단계에서 문제가 발생했을 수 있습니다.",
+              "description": "**${{ github.ref_name }}** API 배포가 완료되지 않았습니다. (상태: 취소 또는 건너뜀)\n이전 단계에서 문제가 발생했을 수 있습니다.",
               "color": 16577629
             }]
           }' \
