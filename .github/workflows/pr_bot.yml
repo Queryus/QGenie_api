@@ -44,7 +44,7 @@ jobs:
               \"title\": \"New Comment on PR #${{ github.event.issue.number }}\",
               \"description\": \"**${{ github.actor }}**님의 새 댓글: \\n${COMMENT_BODY}\",
               \"url\": \"${{ github.event.comment.html_url }}\",
-              \"color\": 15105634
+              \"color\": 15105570
             }]
           }" \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
