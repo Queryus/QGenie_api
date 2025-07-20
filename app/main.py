@@ -5,17 +5,17 @@ import socket  # 소켓 모듈 임포트
 import uvicorn
 from fastapi import FastAPI
 
+from app.api import health  # 헬스체크
+
 app = FastAPI()
+
+# 헬스 체크 라우터
+app.include_router(health.router)
 
 
 @app.get("/")
 async def read_root():
     return {"message": "Hello, FastAPI Backend!"}
-
-
-@app.get("/health")
-async def health_check():
-    return {"status": "ok", "message": "Service is healthy"}
 
 
 # 이 부분이 추가된 동적 포트 할당 로직입니다.
