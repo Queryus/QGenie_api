@@ -17,11 +17,12 @@ os_full_name = platform.platform()  # Darwin-22.5.0-x86_64, Windows-10-10.0.1904
 
 # 주요 DB별 대표적인 파이썬 드라이버들 복수 리스트로 작성
 DRIVER_MAP = {
-    "postgresql": "psycopg2",
-    "mysql": "pymysql",
-    "sqlite": "sqlite3",
-    "oracle": "cx_Oracle",
-    "sqlserver": "pyodbc",
+    "postgresql": ["psycopg2", "psycopg2_binary", "pg8000"],
+    "mysql": ["mysql.connector", "pymysql", "MySQLdb", "oursql"],
+    "sqlite": ["sqlite3"],
+    "oracle": ["cx_Oracle", "oracledb"],
+    "sqlserver": ["pyodbc", "pymssql"],
+    "mariadb": ["mariadb", "mysql.connector", "pymysql", "MySQLdb", "oursql"],
 }
 
 
@@ -124,12 +125,17 @@ def check_driver(driver_id: str) -> DBDriverInfo:
         module_names = [module_names]
 
     installed_module = None
+
     spec = None
+
     for mod_name in module_names:
-        spec = importlib.util.find_spec(mod_name)
-        if spec is not None:
+        try:
+            mod = importlib.import_module(mod_name)
             installed_module = mod_name
+            spec = getattr(mod, "__spec__", None)
             break
+        except ModuleNotFoundError:
+            continue
 
     is_installed = installed_module is not None
     logger.info(f"[check_driver] 발견된 모듈명: {installed_module}, spec: {spec}")
