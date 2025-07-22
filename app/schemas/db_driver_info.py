@@ -9,3 +9,5 @@ class DBDriverInfo(BaseModel):
     driver_name: str | None = None
     driver_size_bytes: int | None = None
     driver_version: str | None = None
+    os_name: str | None = None
+    os_full_name: str | None = None
