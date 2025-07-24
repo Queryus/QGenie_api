@@ -1,5 +1,4 @@
 # .github/workflows/build_release_and_notify.yml
-
 name: Build and Deploy Executables
 
 on:
@@ -119,7 +118,7 @@ jobs:
           if git diff-index --quiet HEAD; then
             echo "No changes to commit to QGenie APP repository."
           else
-            git commit -m "feat: API 실행 파일 업데이트 (${{ github.ref_name }})"
+            git commit -m "feat: Update API executable (${{ github.ref_name }})"
             git push
           fi
 
