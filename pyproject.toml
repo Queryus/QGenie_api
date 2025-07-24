@@ -38,6 +38,7 @@ pytest-asyncio = "^1.1.0"
 # ----------------------------
 # Ruff 설정
 # ----------------------------
+pytest-cov = "^6.2.1"
 [tool.ruff]
 line-length = 120
 exclude = [
