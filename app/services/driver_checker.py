@@ -145,6 +145,9 @@ def check_driver(driver_id: str) -> DBDriverInfo:
     driver_size_bytes = None
     driver_version = "N/A"
 
+    # print("DEBUG: spec=", spec)
+    # print("DEBUG: is_installed=", is_installed)
+
     if is_installed and spec and spec.origin:
         driver_path = spec.origin
         driver_name = os.path.basename(driver_path)
