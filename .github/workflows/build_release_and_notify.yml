@@ -4,6 +4,7 @@ name: Build and Deploy Executables
 on:
   release:
     types: [published] # Release가 'published' 상태가 될 때 트리거
+  workflow_dispatch:
 
 jobs:
   # ==================================
