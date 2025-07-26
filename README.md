@@ -88,13 +88,13 @@
 
    ```bash
    poetry shell
-   uvicorn app.main:app --reload
+   uvicorn app.main:app --host 0.0.0.0 --port 39722 --reload
    ```
 
    또는 Poetry Run을 사용하여 직접 실행할 수 있습니다.
 
    ```bash
-   uvicorn main:app --host 0.0.0.0 --port 39722
+   poetry run uvicorn main:app --host 0.0.0.0 --port 39722 --reload
    ```
 
 ### **코드 컨벤션 (PEP 8, Ruff, Black)**
