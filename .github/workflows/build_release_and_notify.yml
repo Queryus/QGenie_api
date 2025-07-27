@@ -1,16 +1,17 @@
 # .github/workflows/build_release_and_notify.yml
-
 name: Build and Deploy Executables
 
 on:
   release:
     types: [published] # Release가 'published' 상태가 될 때 트리거
+  workflow_dispatch:
 
 jobs:
   # ==================================
   #    파이프라인 시작 알림
   # ==================================
   start:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
       - name: Send Pipeline Start Notification
@@ -28,7 +29,6 @@ jobs:
   #    실행 파일 빌드
   # ==================================
   build:
-    needs: start
     strategy:
       matrix:
         os: [macos-latest, windows-latest]
@@ -90,6 +90,7 @@ jobs:
   # ==================================
   deploy:
     needs: build
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
 
     steps:
@@ -119,7 +120,7 @@ jobs:
           if git diff-index --quiet HEAD; then
             echo "No changes to commit to QGenie APP repository."
           else
-            git commit -m "feat: API 실행 파일 업데이트 (${{ github.ref_name }})"
+            git commit -m "feat: Update API executable (${{ github.ref_name }})"
             git push
           fi
 
@@ -129,7 +130,7 @@ jobs:
   finish:
     needs: deploy
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && github.event_name == 'release'
 
     steps:
       - name: Send Success Notification
