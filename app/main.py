@@ -7,9 +7,20 @@ from app.api import health  # 헬스 체크
 from app.core.port import get_available_port  # 동적 포트 할당
 from app.api.api_router import api_router
 
+
+from app.core.exceptions import (
+    APIException,
+    api_exception_handler,
+    generic_exception_handler
+)
+
 app = FastAPI()
 
-# 헬스 체크 라우터
+# 전역 예외 처리기 등록
+app.add_exception_handler(APIException, api_exception_handler)
+app.add_exception_handler(Exception, generic_exception_handler)
+
+# 라우터
 app.include_router(health.router)
 app.include_router(api_router, prefix="/api")
 
