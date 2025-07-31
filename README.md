@@ -88,7 +88,7 @@
 
    ```bash
    poetry shell
-   uvicorn main:app --reload
+   uvicorn app.main:app --reload
    ```
 
    또는 Poetry Run을 사용하여 직접 실행할 수 있습니다.
