@@ -1,23 +1,44 @@
-import uuid
-from pathlib import Path
+import os
+import base64
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Random import get_random_bytes
 
-# 앱 데이터를 저장할 폴더 이름
-APP_DATA_DIR_NAME = ".my_awesome_app"
+"""
+보안 원칙을 적용한 AES-256 암호화 및 복호화 클래스입니다.
+- 암호화 시 매번 새로운 랜덤 IV를 생성합니다.
+"""
+class AES256:
+    _key = "Y1dkbGJtbGxMbUZsY3pJMU5pNXJaWGs9".encode('utf-8')
 
-def get_db_path() -> Path:
-    """
-    사용자 홈 디렉터리 내에 앱 데이터 폴더를 만들고,
-    SQLite DB 파일의 전체 경로를 반환합니다.
-    """
-    home_dir = Path.home()
-    app_data_dir = home_dir / APP_DATA_DIR_NAME
-    app_data_dir.mkdir(exist_ok=True)
-    db_path = app_data_dir / "local_storage.sqlite"
-    return db_path
+    @staticmethod
+    def encrypt(text: str) -> str:
+        iv = get_random_bytes(AES.block_size)
 
-def generate_uuid() -> str:
-    return uuid.uuid4().hex.upper()
+        cipher = AES.new(AES256._key, AES.MODE_CBC, iv)
 
-def generate_prefixed_uuid(prefix: str) -> str:
-    return f"{prefix.upper()}-{uuid.uuid4().hex.upper()}"
+        data_bytes = text.encode('utf-8')
+        padded_bytes = pad(data_bytes, AES.block_size)
+
+        encrypted_bytes = cipher.encrypt(padded_bytes)
+
+        combined_bytes = iv + encrypted_bytes
+        return base64.b64encode(combined_bytes).decode('utf-8')
+
+    @staticmethod
+    def decrypt(cipher_text: str) -> str:
+        """
+        AES-256으로 암호화된 텍스트를 복호화합니다.
+        """
+        combined_bytes = base64.b64decode(cipher_text)
+
+        iv = combined_bytes[:AES.block_size]
+        encrypted_bytes = combined_bytes[AES.block_size:]
+
+        cipher = AES.new(AES256._key, AES.MODE_CBC, iv)
+
+        decrypted_padded_bytes = cipher.decrypt(encrypted_bytes)
+        decrypted_bytes = unpad(decrypted_padded_bytes, AES.block_size)
+
+        return decrypted_bytes.decode('utf-8')
 
