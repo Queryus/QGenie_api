@@ -23,7 +23,7 @@ class CommonCode(Enum):
     NO_VALUE = (status.HTTP_400_BAD_REQUEST, "4000", "필수 값이 존재하지 않습니다.")
     DUPLICATION = (status.HTTP_409_CONFLICT, "4001", "이미 존재하는 데이터입니다.")
     NO_SEARCH_DATA = (status.HTTP_404_NOT_FOUND, "4002", "요청한 데이터를 찾을 수 없습니다.")
-    INVALID_ENUM_VALUE = (status.HTTP_422_UNPROCESSABLE_ENTITY, "4003", "유효하지 않은 열거형 값입니다.")
+    INVALID_ENUM_VALUE = (status.HTTP_422_UNPROCESSABLE_ENTITY, "4003", "지원하지 않는 데이터베이스 값입니다.")
 
     # ==================================
     #    서버 오류 (Server Error) - 5xx
