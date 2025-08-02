@@ -6,11 +6,12 @@ from app.core.status import CommonCode
 
 router = APIRouter()
 
-@router.get("/test", response_model=ResponseMessage, summary="타입 변환을 이용한 성공/실패/버그 테스트")
+@router.get("", response_model=ResponseMessage, summary="타입 변환을 이용한 성공/실패/버그 테스트")
 def simple_test(mode: str):
     """
     curl 테스트 시 아래 명령어 사용
     curl -i -X GET "http://localhost:<port>/api/test?mode=1"
+    curl -i -X GET "http://localhost:8000/api/test?mode=1"
 
     쿼리 파라미터 'mode' 값에 따라 다른 응답을 반환합니다.
 
