@@ -1,22 +1,8 @@
-# app/schemas/driver_schemas.py
-from enum import Enum
+# app/schemas/driver_info.py
+import importlib
+import os
 
 from pydantic import BaseModel
-
-
-class DriverEnum(str, Enum):
-    postgresql = ("postgresql", "psycopg2")
-    mysql = ("mysql", "mysql.connector")
-    sqlite = ("sqlite", "sqlite3")
-    oracle = ("oracle", "cx_Oracle")
-    sqlserver = ("sqlserver", "pyodbc")
-    mariadb = ("mariadb", "pymysql")
-
-    def __new__(cls, db_type, module):
-        obj = str.__new__(cls, db_type)
-        obj._value_ = db_type  # 초기 유효성 검사 값
-        obj.driver_module = module  # db_type에 맞는 드라이버
-        return obj
 
 
 class DriverInfo(BaseModel):
@@ -26,17 +12,20 @@ class DriverInfo(BaseModel):
     driver_version: str | None
     driver_size_bytes: int | None
 
-
-class DriverInfoResponse(BaseModel):
-    message: str
-    data: DriverInfo | None = None
-
     @classmethod
-    def success(cls, value: DriverInfo):
-        return cls(message="드라이버 정보를 성공적으로 불러왔습니다.", data=value)
+    def from_module(cls, db_type: str, module_name: str):
+        """모듈 이름으로부터 DriverInfo 객체를 생성하는 팩토리 메서드"""
+        # 서비스에 있던 로직을 이곳으로 이동
+        mod = importlib.import_module(module_name)
+        version = getattr(mod, "__version__", None)
+        path = getattr(mod.__spec__, "origin", None)
+        size = os.path.getsize(path) if path else None
 
-    @classmethod
-    def error(cls, e: Exception | None = None):
-        if e:
-            print(f"[ERROR] {type(e).__name__}: {e}")  # 로그
-        return cls(message="드라이버 정보를 가져오지 못했습니다. 다시 시도해주세요.", data=None)
+        # 자기 자신의 인스턴스를 생성하여 반환
+        return cls(
+            db_type=db_type,
+            is_installed=True,
+            driver_name=module_name,
+            driver_version=version,
+            driver_size_bytes=size,
+        )
