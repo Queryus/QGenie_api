@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.assets.driver_enum import DriverEnum
+from app.core.driver_enum import DriverEnum
 from app.core.exceptions import APIException
 from app.core.status import CommonCode
 from app.schemas.driver_info import DriverInfo
