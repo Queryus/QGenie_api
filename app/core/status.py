@@ -1,5 +1,7 @@
 from enum import Enum
+
 from fastapi import status
+
 
 class CommonCode(Enum):
     """
@@ -21,12 +23,12 @@ class CommonCode(Enum):
     NO_VALUE = (status.HTTP_400_BAD_REQUEST, "4000", "필수 값이 존재하지 않습니다.")
     DUPLICATION = (status.HTTP_409_CONFLICT, "4001", "이미 존재하는 데이터입니다.")
     NO_SEARCH_DATA = (status.HTTP_404_NOT_FOUND, "4002", "요청한 데이터를 찾을 수 없습니다.")
+    INVALID_ENUM_VALUE = (status.HTTP_422_UNPROCESSABLE_ENTITY, "4003", "유효하지 않은 열거형 값입니다.")
 
     # ==================================
     #    서버 오류 (Server Error) - 5xx
     # ==================================
     FAIL = (status.HTTP_500_INTERNAL_SERVER_ERROR, "9999", "서버 처리 중 오류가 발생했습니다.")
-
 
     def __init__(self, http_status: int, code: str, message: str):
         """Enum 멤버가 생성될 때 각 값을 속성으로 할당합니다."""
@@ -39,4 +41,3 @@ class CommonCode(Enum):
         메시지 포맷팅이 필요한 경우, 인자를 받아 완성된 메시지를 반환합니다.
         """
         return self.message % args if args else self.message
-
