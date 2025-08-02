@@ -5,12 +5,13 @@ from fastapi import FastAPI
 
 from app.api import health  # 헬스 체크
 from app.core.port import get_available_port  # 동적 포트 할당
+from app.api.api_router import api_router
 
 app = FastAPI()
 
 # 헬스 체크 라우터
 app.include_router(health.router)
-
+app.include_router(api_router, prefix="/api")
 
 @app.get("/")
 async def read_root():
