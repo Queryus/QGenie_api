@@ -32,7 +32,7 @@
 
     ```bash
     git clone https://github.com/Queryus/QGenie_api.git
-    cd app # 복제된 저장소 디렉토리로 이동
+    cd QGenie_api
 
     ```
 
