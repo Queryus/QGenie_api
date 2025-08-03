@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api import connect_driver, test_api
+from app.api import driver_api, test_api
 
 api_router = APIRouter()
 
@@ -8,4 +8,4 @@ api_router = APIRouter()
 api_router.include_router(test_api.router, prefix="/test", tags=["Test"])
 
 # 라우터
-api_router.include_router(connect_driver.router, prefix="/connections", tags=["Driver"])
+api_router.include_router(driver_api.router, prefix="/connections", tags=["Driver"])

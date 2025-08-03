@@ -1,4 +1,4 @@
-# app/service/driver_info_provider.py
+# app/service/driver_service.py
 import importlib
 import os
 
@@ -14,7 +14,8 @@ def db_driver_info(driver_info: DriverInfo):
         path = getattr(mod.__spec__, "origin", None)
         size = os.path.getsize(path) if path else None
 
-        return DriverInfo.from_module(driver_info.db_type, driver_info.driver_name, version, size)
+        driver_info.update_from_module(version, size)
+        return driver_info
 
     except (ModuleNotFoundError, AttributeError, OSError):
         raise APIException(CommonCode.FAIL)

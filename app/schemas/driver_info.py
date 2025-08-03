@@ -11,26 +11,22 @@ class DriverInfo(BaseModel):
     driver_version: str | None
     driver_size_bytes: int | None
 
-    @classmethod
-    def from_module(cls, db_type: str, driver_name: str, version: str | None, size: int | None):
+    def update_from_module(self, version: str | None, size: int | None):
         """
-        설치된 드라이버의 모든 정보를 바탕으로 DriverInfo 객체를 생성합니다.
-        `is_installed`는 항상 True로 설정됩니다.
+        객체 자신의 속성을 직접 업데이트하여 설치된 드라이버 정보를 채웁니다.
         """
-        return cls(
-            db_type=db_type,
-            is_installed=True,
-            driver_name=driver_name,
-            driver_version=version,
-            driver_size_bytes=size,
-        )
+        self.is_installed = True
+        self.driver_version = version
+        self.driver_size_bytes = size
 
     @classmethod
-    def from_driver_info(cls, db_type: str, driver_name: str):
+    def from_enum(cls, db_type_enum: DBTypesEnum):
         """
-        최소한의 정보(DB 타입, 드라이버 이름)만으로 초기 DriverInfo 객체를 생성합니다.
+        DBTypesEnum 객체를 인자로 받아, db_type, driver_name만으로 driverInfo 객체를 생성합니다.
         `is_installed`는 False로 설정됩니다.
         """
+        db_type = db_type_enum.name
+        driver_name = db_type_enum.value
         return cls(
             db_type=db_type,
             is_installed=False,
@@ -38,10 +34,3 @@ class DriverInfo(BaseModel):
             driver_version=None,
             driver_size_bytes=None,
         )
-
-    @classmethod
-    def from_enum(cls, db_type_enum: DBTypesEnum):
-        """
-        DBTypesEnum 객체를 인자로 받아, from_driver_info를 호출해 초기 객체를 생성합니다.
-        """
-        return cls.from_driver_info(db_type=db_type_enum.name, driver_name=db_type_enum.value)
