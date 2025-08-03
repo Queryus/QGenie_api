@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from app.api import health  # 헬스 체크
 from app.api.api_router import api_router
 from app.core.exceptions import APIException, api_exception_handler, generic_exception_handler
+from app.db.init_db import initialize_database
 
 app = FastAPI()
 
@@ -17,6 +18,8 @@ app.add_exception_handler(Exception, generic_exception_handler)
 app.include_router(health.router)
 app.include_router(api_router, prefix="/api")
 
+# initialize_database 함수가 호출되어 테이블이 생성되거나 이미 존재함을 확인합니다.
+initialize_database()
 
 if __name__ == "__main__":
     # Uvicorn 서버를 시작합니다.

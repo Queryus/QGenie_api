@@ -2,11 +2,11 @@
 
 from fastapi import APIRouter
 
-from app.core.db_driver_enum import DBTypesEnum
+from app.core.enum.db_driver import DBTypesEnum
 from app.core.exceptions import APIException
 from app.core.status import CommonCode
 from app.schemas.driver_info import DriverInfo
-from app.schemas.response import ResponseMessage
+from app.core.response import ResponseMessage
 from app.services.driver_service import db_driver_info
 
 router = APIRouter()
