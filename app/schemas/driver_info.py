@@ -19,6 +19,8 @@ class DriverInfo(BaseModel):
         self.driver_version = version
         self.driver_size_bytes = size
 
+        return self
+
     @classmethod
     def from_enum(cls, db_type_enum: DBTypesEnum):
         """

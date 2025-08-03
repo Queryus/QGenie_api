@@ -14,8 +14,7 @@ def db_driver_info(driver_info: DriverInfo):
         path = getattr(mod.__spec__, "origin", None)
         size = os.path.getsize(path) if path else None
 
-        driver_info.update_from_module(version, size)
-        return driver_info
+        return driver_info.update_from_module(version, size)
 
     except (ModuleNotFoundError, AttributeError, OSError):
         raise APIException(CommonCode.FAIL)
