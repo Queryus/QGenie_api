@@ -88,13 +88,13 @@
 
    ```bash
    poetry shell
-   uvicorn app.main:app --reload
+   uvicorn app.main:app --host 0.0.0.0 --port 39722 --reload
    ```
 
    또는 Poetry Run을 사용하여 직접 실행할 수 있습니다.
 
    ```bash
-   poetry run uvicorn main:app --reload
+   poetry run uvicorn main:app --host 0.0.0.0 --port 39722 --reload
    ```
 
 ### **코드 컨벤션 (PEP 8, Ruff, Black)**
@@ -141,9 +141,9 @@
 
 1. **브라우저 확인**
 
-   - 기본 루트 엔드포인트: <http://localhost:8000/>
-   - 헬스 체크 엔드포인트: <http://127.0.0.1:8000/health>
-   - API 문서: <http://127.0.0.1:8000/docs>
+   - 기본 루트 엔드포인트: <http://localhost:39722/>
+   - 헬스 체크 엔드포인트: <http://127.0.0.1:39722/health>
+   - API 문서: <http://127.0.0.1:39722/docs>
 
 2. **CLI로 접속 확인하기**
 
@@ -151,14 +151,13 @@
 
    - 기본 루트 엔드포인트:
      ```bash
-     curl http://localhost:8000/
+     curl http://localhost:39722/
      ```
    - 헬스 체크 엔드포인트:
      ```bash
-     curl http://localhost:8000/health
+     curl http://localhost:39722/health
      ```
    - API 문서:
      ```bash
-     curl http://localhost:8000/openapi.json
+     curl http://localhost:39722/openapi.json
      ```
-
