@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.schemas.response import ResponseMessage
+from app.core.response import ResponseMessage
 from app.core.exceptions import APIException
 from app.core.status import CommonCode
 
