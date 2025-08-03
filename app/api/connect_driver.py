@@ -18,10 +18,7 @@ def read_driver_info(driverId: str):
     try:
         # DBTypesEnum 객체를 한 줄로 가져옵니다.
         db_type_enum = DBTypesEnum[driverId.lower()]
-
-        return ResponseMessage.success(
-            value=db_driver_info(DriverInfo.from_driver_info(db_type=db_type_enum.name, driver_name=db_type_enum.value))
-        )
+        return ResponseMessage.success(value=db_driver_info(DriverInfo.from_enum(db_type_enum)))
     # db_type 유효성 검사 실패시
     except KeyError:
         raise APIException(CommonCode.INVALID_ENUM_VALUE)
