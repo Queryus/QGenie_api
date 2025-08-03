@@ -9,7 +9,7 @@ from Crypto.Random import get_random_bytes
 - 암호화 시 매번 새로운 랜덤 IV를 생성합니다.
 """
 class AES256:
-    _key = "Y1dkbGJtbGxMbUZsY3pJMU5pNXJaWGs9".encode('utf-8')
+    _key = base64.b64decode(os.getenv("ENV_AES256_KEY"))
 
     @staticmethod
     def encrypt(text: str) -> str:
