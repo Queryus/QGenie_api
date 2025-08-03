@@ -1,7 +1,7 @@
 # app/schemas/driver_info.py
 from pydantic import BaseModel
 
-from app.core.db_driver_enum import DBTypesEnum
+from app.core.enum.db_driver import DBTypesEnum
 
 
 class DriverInfo(BaseModel):
