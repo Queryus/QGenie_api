@@ -1,3 +1,4 @@
+# db/init_db.py
 import sqlite3
 from app.core.utils import get_db_path
 
@@ -11,50 +12,112 @@ def initialize_database():
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        # ConnectionProfile 테이블 생성
+        # db_profile 테이블 생성
         cursor.execute("""
-        CREATE TABLE IF NOT EXISTS ConnectionProfile (
-            id INTEGER PRIMARY KEY,
-            db_type TEXT NOT NULL,
-            host TEXT NOT NULL,
-            port INTEGER NOT NULL,
-            username TEXT NOT NULL,
-            password TEXT NOT NULL,
-            name TEXT,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
+            CREATE TABLE IF NOT EXISTS db_profile (
+                id VARCHAR(64) PRIMARY KEY NOT NULL,
+                type VARCHAR(32) NOT NULL,
+                host VARCHAR(255) NOT NULL,
+                port INTEGER NOT NULL,
+                name VARCHAR(64),
+                username VARCHAR(128) NOT NULL,
+                password VARCHAR(128) NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        # db_profile 테이블의 updated_at을 자동으로 업데이트하는 트리거
+        cursor.execute("""
+            CREATE TRIGGER IF NOT EXISTS update_db_profile_updated_at
+            BEFORE UPDATE ON db_profile
+            FOR EACH ROW
+            BEGIN
+                UPDATE db_profile SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;
         """)
 
-        # ConnectionProfile에 updated_at 자동 갱신을 위한 트리거 생성
+        # ai_credential 테이블 생성
         cursor.execute("""
-        CREATE TRIGGER IF NOT EXISTS update_connectionprofile_updated_at
-        AFTER UPDATE ON ConnectionProfile
-        FOR EACH ROW
-        BEGIN
-            UPDATE ConnectionProfile SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-        END;
+            CREATE TABLE IF NOT EXISTS ai_credential (
+                id VARCHAR(64) PRIMARY KEY NOT NULL,
+                service_name VARCHAR(32) NOT NULL,
+                api_key VARCHAR(256) NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        # ai_credential 테이블의 updated_at을 자동으로 업데이트하는 트리거
+        cursor.execute("""
+            CREATE TRIGGER IF NOT EXISTS update_ai_credential_updated_at
+            BEFORE UPDATE ON ai_credential
+            FOR EACH ROW
+            BEGIN
+                UPDATE ai_credential SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;
         """)
 
-        # APICredential 테이블 생성
+        # chat_tab 테이블 생성
         cursor.execute("""
-        CREATE TABLE IF NOT EXISTS APICredential (
-            id INTEGER PRIMARY KEY,
-            service_name TEXT NOT NULL,
-            api_key TEXT NOT NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
+            CREATE TABLE IF NOT EXISTS chat_tab (
+                id VARCHAR(64) PRIMARY KEY NOT NULL,
+                name VARCHAR(255),
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        # chat_tab 테이블의 updated_at을 자동으로 업데이트하는 트리거
+        cursor.execute("""
+            CREATE TRIGGER IF NOT EXISTS update_chat_tab_updated_at
+            BEFORE UPDATE ON chat_tab
+            FOR EACH ROW
+            BEGIN
+                UPDATE chat_tab SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;
         """)
 
-        # APICredential에 updated_at 자동 갱신을 위한 트리거 생성
+        # chat_message 테이블 생성
         cursor.execute("""
-        CREATE TRIGGER IF NOT EXISTS update_apicredential_updated_at
-        AFTER UPDATE ON APICredential
-        FOR EACH ROW
-        BEGIN
-            UPDATE APICredential SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-        END;
+            CREATE TABLE IF NOT EXISTS chat_message (
+                id VARCHAR(64) PRIMARY KEY NOT NULL,
+                chat_tab_id VARCHAR(64) NOT NULL,
+                sender VARCHAR(1) NOT NULL,
+                message TEXT NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (chat_tab_id) REFERENCES chat_tab(id)
+            );
+        """)
+        # chat_message 테이블의 updated_at을 자동으로 업데이트하는 트리거
+        cursor.execute("""
+            CREATE TRIGGER IF NOT EXISTS update_chat_message_updated_at
+            BEFORE UPDATE ON chat_message
+            FOR EACH ROW
+            BEGIN
+                UPDATE chat_message SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;
+        """)
+
+        # query_history 테이블 생성
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS query_history (
+                id VARCHAR(64) PRIMARY KEY NOT NULL,
+                chat_message_id VARCHAR(64) NOT NULL,
+                query_text TEXT NOT NULL,
+                is_success VARCHAR(1) NOT NULL,
+                error_message TEXT NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (chat_message_id) REFERENCES chat_message(id)
+            );
+        """)
+        # query_history 테이블의 updated_at을 자동으로 업데이트하는 트리거
+        cursor.execute("""
+            CREATE TRIGGER IF NOT EXISTS update_query_history_updated_at
+            BEFORE UPDATE ON query_history
+            FOR EACH ROW
+            BEGIN
+                UPDATE query_history SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;
         """)
 
         conn.commit()

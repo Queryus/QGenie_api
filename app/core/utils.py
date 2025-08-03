@@ -2,7 +2,7 @@ import uuid
 from pathlib import Path
 
 # 앱 데이터를 저장할 폴더 이름
-APP_DATA_DIR_NAME = ".my_awesome_app"
+APP_DATA_DIR_NAME = ".qgenie"
 
 def get_db_path() -> Path:
     """
