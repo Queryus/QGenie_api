@@ -3,7 +3,7 @@ import sqlite3
 from app.core.exceptions import APIException
 from app.core.security import AES256
 from app.core.status import CommonCode
-from app.core.utils import generate_uuid, get_db_path
+from app.core.utils import generate_prefixed_uuid, get_db_path
 from app.schemas.llm_api_key import ApiKeyCredentialCreate, ApiKeyCredentialInDB
 
 
@@ -11,7 +11,7 @@ def store_api_key(credential_data: ApiKeyCredentialCreate) -> ApiKeyCredentialIn
     """API_KEY를 암호화하여 데이터베이스에 저장합니다."""
 
     encrypted_key = AES256.encrypt(credential_data.api_key)
-    new_id = generate_uuid()
+    new_id = generate_prefixed_uuid()
 
     db_path = get_db_path()
     conn = None
