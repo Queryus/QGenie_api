@@ -1,13 +1,16 @@
-import os
 import base64
+import os
+
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad, unpad
 from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
 
 """
 보안 원칙을 적용한 AES-256 암호화 및 복호화 클래스입니다.
 - 암호화 시 매번 새로운 랜덤 IV를 생성합니다.
 """
+
+
 class AES256:
     _key = base64.b64decode(os.getenv("ENV_AES256_KEY"))
 
@@ -17,13 +20,13 @@ class AES256:
 
         cipher = AES.new(AES256._key, AES.MODE_CBC, iv)
 
-        data_bytes = text.encode('utf-8')
+        data_bytes = text.encode("utf-8")
         padded_bytes = pad(data_bytes, AES.block_size)
 
         encrypted_bytes = cipher.encrypt(padded_bytes)
 
         combined_bytes = iv + encrypted_bytes
-        return base64.b64encode(combined_bytes).decode('utf-8')
+        return base64.b64encode(combined_bytes).decode("utf-8")
 
     @staticmethod
     def decrypt(cipher_text: str) -> str:
@@ -32,13 +35,12 @@ class AES256:
         """
         combined_bytes = base64.b64decode(cipher_text)
 
-        iv = combined_bytes[:AES.block_size]
-        encrypted_bytes = combined_bytes[AES.block_size:]
+        iv = combined_bytes[: AES.block_size]
+        encrypted_bytes = combined_bytes[AES.block_size :]
 
         cipher = AES.new(AES256._key, AES.MODE_CBC, iv)
 
         decrypted_padded_bytes = cipher.decrypt(encrypted_bytes)
         decrypted_bytes = unpad(decrypted_padded_bytes, AES.block_size)
 
-        return decrypted_bytes.decode('utf-8')
-
+        return decrypted_bytes.decode("utf-8")
