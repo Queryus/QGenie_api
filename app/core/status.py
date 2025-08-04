@@ -55,6 +55,11 @@ class CommonCode(Enum):
     # ==================================
     """ 기본 서버 오류 코드 - 50xx """
     FAIL = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5000", "서버 처리 중 오류가 발생했습니다.")
+    DB_BUSY = (
+        status.HTTP_503_SERVICE_UNAVAILABLE,
+        "5001",
+        "데이터베이스가 현재 사용 중입니다. 잠시 후 다시 시도해주세요.",
+    )
 
     """ DRIVER, DB 서버 오류 코드 - 51xx """
     FAIL_CONNECT_DB = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5100", "디비 연결 중 오류가 발생했습니다.")
