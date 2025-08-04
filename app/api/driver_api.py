@@ -12,13 +12,16 @@ from app.services.driver_service import db_driver_info
 router = APIRouter()
 
 
-@router.get("/drivers/{driverId}", response_model=ResponseMessage[DriverInfo], summary="DB 드라이버 정보 조회 API")
-def read_driver_info(driverId: str):
-    """DB 드라이버 정보 조회"""
+@router.get(
+    "/drivers/{driver_id}",
+    response_model=ResponseMessage,
+    summary="DB 드라이버 정보 조회",
+)
+def read_driver_info(driver_id: str) -> ResponseMessage:
+    """경로 파라미터로 받은 driver_id에 해당하는 DB 드라이버의 지원 정보를 조회합니다."""
     try:
-        # DBTypesEnum에서 driverID에 맞는 객체를 가져옵니다.
-        db_type_enum = DBTypesEnum[driverId.lower()]
-        return ResponseMessage.success(value=db_driver_info(DriverInfo.from_enum(db_type_enum)))
-    # db_type_enum 유효성 검사 실패
+        db_type_enum = DBTypesEnum[driver_id.lower()]
+        driver_info_data = DriverInfo.from_enum(db_type_enum)
+        return ResponseMessage.success(value=db_driver_info(driver_info_data))
     except KeyError:
         raise APIException(CommonCode.INVALID_ENUM_VALUE) from KeyError
