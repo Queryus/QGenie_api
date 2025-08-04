@@ -1,10 +1,11 @@
 from fastapi import APIRouter
 
-from app.core.response import ResponseMessage
 from app.core.exceptions import APIException
+from app.core.response import ResponseMessage
 from app.core.status import CommonCode
 
 router = APIRouter()
+
 
 @router.get("", response_model=ResponseMessage, summary="타입 변환을 이용한 성공/실패/버그 테스트")
 def simple_test(mode: str):
@@ -27,14 +28,11 @@ def simple_test(mode: str):
         # 2. 정수로 변환 성공 시, 값에 따라 분기
         if mode_int == 1:
             # 기본 성공 코드(SUCCESS)로 응답
-            return ResponseMessage.success(
-                value={"detail": "기본 성공 테스트입니다."}
-            )
+            return ResponseMessage.success(value={"detail": "기본 성공 테스트입니다."})
         elif mode_int == 2:
             # 커스텀 성공 코드(CREATED)로 응답
             return ResponseMessage.success(
-                value={"detail": "커스텀 성공 코드(CREATED) 테스트입니다."},
-                code=CommonCode.CREATED
+                value={"detail": "커스텀 성공 코드(CREATED) 테스트입니다."}, code=CommonCode.CREATED
             )
         else:
             # 그 외 숫자는 '데이터 없음' 오류로 처리
@@ -44,5 +42,4 @@ def simple_test(mode: str):
         # 3. 정수로 변환 실패 시 (문자열이 들어온 경우)
         # 예상치 못한 버그를 강제로 발생시킵니다.
         # 이 에러는 generic_exception_handler가 처리하게 됩니다.
-        raise TypeError("의도적으로 발생시킨 타입 에러입니다.")
-
+        raise TypeError("의도적으로 발생시킨 타입 에러입니다.") from ValueError

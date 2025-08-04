@@ -4,9 +4,9 @@ from fastapi import APIRouter
 
 from app.core.enum.db_driver import DBTypesEnum
 from app.core.exceptions import APIException
+from app.core.response import ResponseMessage
 from app.core.status import CommonCode
 from app.schemas.driver_info import DriverInfo
-from app.core.response import ResponseMessage
 from app.services.driver_service import db_driver_info
 
 router = APIRouter()
@@ -21,4 +21,4 @@ def read_driver_info(driverId: str):
         return ResponseMessage.success(value=db_driver_info(DriverInfo.from_enum(db_type_enum)))
     # db_type_enum 유효성 검사 실패
     except KeyError:
-        raise APIException(CommonCode.INVALID_ENUM_VALUE)
+        raise APIException(CommonCode.INVALID_ENUM_VALUE) from KeyError

@@ -16,5 +16,5 @@ def db_driver_info(driver_info: DriverInfo):
 
         return driver_info.update_from_module(version, size)
 
-    except (ModuleNotFoundError, AttributeError, OSError):
-        raise APIException(CommonCode.FAIL)
+    except (ModuleNotFoundError, AttributeError, OSError) as e:
+        raise APIException(CommonCode.FAIL) from e
