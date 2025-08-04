@@ -43,6 +43,7 @@ class CommonCode(Enum):
     NO_DB_DRIVER = (status.HTTP_400_BAD_REQUEST, "4101", "데이터베이스는 필수 값입니다.")
 
     """ KEY 클라이언트 오류 코드 - 42xx """
+    INVALID_API_KEY_FORMAT = (status.HTTP_400_BAD_REQUEST, "4200", "API 키의 형식이 올바르지 않습니다.")
 
     """ AI CHAT, DB 클라이언트 오류 코드 - 43xx """
 
