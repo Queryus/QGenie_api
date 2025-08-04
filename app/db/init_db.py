@@ -48,7 +48,7 @@ def initialize_database():
             """
             CREATE TABLE IF NOT EXISTS ai_credential (
                 id VARCHAR(64) PRIMARY KEY NOT NULL,
-                service_name VARCHAR(32) NOT NULL,
+                service_name VARCHAR(32) NOT NULL UNIQUE,
                 api_key VARCHAR(256) NOT NULL,
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
