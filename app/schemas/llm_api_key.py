@@ -2,9 +2,11 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from app.core.enum.llm_service import LLMServiceEnum
+
 
 class ApiKeyCredentialBase(BaseModel):
-    service_name: str = Field(..., description="외부 서비스 이름 (예: OpenAI, Anthropic)")
+    service_name: LLMServiceEnum = Field(..., description="외부 서비스 이름")
 
 
 class ApiKeyCredentialCreate(ApiKeyCredentialBase):
