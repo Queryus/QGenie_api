@@ -5,6 +5,12 @@ from pydantic import BaseModel, Field
 from app.core.enum.llm_service import LLMServiceEnum
 
 
+class APIKeyUpdate(BaseModel):
+    """API Key 수정을 위한 스키마"""
+
+    api_key: str = Field(..., description="새로운 API Key")
+
+
 class APIKeyBase(BaseModel):
     """모든 API Key 스키마의 기본 모델"""
 
