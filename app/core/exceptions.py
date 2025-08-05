@@ -8,13 +8,13 @@ from fastapi.responses import JSONResponse
 from app.core.status import CommonCode
 
 
-def _create_error_response(code: CommonCode, data: Any | None = None, *message_args) -> JSONResponse:
+def _create_error_response(code: CommonCode, data: Any | None = None) -> JSONResponse:
     """
     모든 에러 응답에 사용될 표준 JSONResponse 객체를 생성하는 헬퍼 함수.
     """
     error_content = {
         "code": code.code,
-        "message": code.get_message(*message_args),
+        "message": code.message,
         "data": data,
     }
     return JSONResponse(
@@ -30,7 +30,8 @@ class APIException(Exception):
 
     def __init__(self, code: CommonCode, *args):
         self.code_enum = code
-        self.message = code.get_message(*args)
+        self.message = code.message
+        self.args = args
         super().__init__(self.message)
 
 
@@ -51,9 +52,7 @@ async def api_exception_handler(request: Request, exc: APIException):
     """
     APIException이 발생했을 때, 이를 감지하여 표준화된 JSON 오류 응답을 반환합니다.
     """
-    return _create_error_response(
-        code=exc.code_enum.http_status, data={"code": exc.code_enum.code, "message": exc.message, "data": None}
-    )
+    return _create_error_response(code=exc.code_enum, data=exc.args)
 
 
 async def generic_exception_handler(request: Request, exc: Exception):
