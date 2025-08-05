@@ -86,7 +86,7 @@ def get_api_key_by_service_name(serviceName: LLMServiceEnum) -> ResponseMessage:
 
 
 @router.put(
-    "/result/{serviceName}",
+    "/modify/{serviceName}",
     response_model=ResponseMessage[APIKeyInfo],
     summary="특정 서비스의 API KEY 수정",
 )
