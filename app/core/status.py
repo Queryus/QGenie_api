@@ -15,7 +15,8 @@ class CommonCode(Enum):
     # ==================================
     SUCCESS = (status.HTTP_200_OK, "2000", "성공적으로 처리되었습니다.")
     CREATED = (status.HTTP_201_CREATED, "2001", "성공적으로 생성되었습니다.")
-    SUCCESS_DB_CONNECT = (status.HTTP_200_OK, "2002", "디비 연결을 성공하였습니다.")
+    SUCCESS_DB_INFO = (status.HTTP_200_OK, "2100", "디비 정보 조회를 성공하였습니다.")
+    SUCCESS_DB_CONNECT = (status.HTTP_200_OK, "2101", "디비 연결을 성공하였습니다.")
 
     # ==================================
     #    클라이언트 오류 (Client Error) - 4xx
@@ -24,11 +25,13 @@ class CommonCode(Enum):
     DUPLICATION = (status.HTTP_409_CONFLICT, "4001", "이미 존재하는 데이터입니다.")
     NO_SEARCH_DATA = (status.HTTP_404_NOT_FOUND, "4002", "요청한 데이터를 찾을 수 없습니다.")
     INVALID_PARAMETER = (status.HTTP_422_UNPROCESSABLE_ENTITY, "4003", "필수 값이 누락되었습니다.")
-    INVALID_ENUM_VALUE = (status.HTTP_422_UNPROCESSABLE_ENTITY, "4101", "지원하지 않는 데이터베이스 값입니다.")
+    INVALID_DB_VALUE = (status.HTTP_422_UNPROCESSABLE_ENTITY, "4101", "지원하지 않는 데이터베이스 값입니다.")
+    NO_SEARCH_DB = (status.HTTP_422_UNPROCESSABLE_ENTITY, "4102", "존재하지 않는 데이터베이스 입니다.")
 
     # ==================================
     #    서버 오류 (Server Error) - 5xx
     # ==================================
+    FAIL_CONNECT_DB = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5100", "디비 연결 중 오류가 발생했습니다.")
     FAIL = (status.HTTP_500_INTERNAL_SERVER_ERROR, "9999", "서버 처리 중 오류가 발생했습니다.")
 
     def __init__(self, http_status: int, code: str, message: str):
@@ -41,4 +44,7 @@ class CommonCode(Enum):
         """
         메시지 포맷팅이 필요한 경우, 인자를 받아 완성된 메시지를 반환합니다.
         """
-        return self.message % args if args else self.message
+        try:
+            return self.message % args if args else self.message
+        except Exception:
+            return self.message
