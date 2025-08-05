@@ -4,7 +4,7 @@ from app.core.enum.llm_service import LLMServiceEnum
 from app.core.exceptions import APIException
 from app.core.response import ResponseMessage
 from app.core.status import CommonCode
-from app.schemas.api_key import APIKeyInfo, APIKeyStore
+from app.schemas.api_key import APIKeyInfo, APIKeyStore, APIKeyUpdate
 from app.services.api_key import service as api_key_service
 
 router = APIRouter()
@@ -82,4 +82,31 @@ def get_api_key_by_service_name(serviceName: LLMServiceEnum):
         created_at=db_credential.created_at,
         updated_at=db_credential.updated_at,
     )
+    return ResponseMessage.success(value=response_data)
+
+
+@router.put(
+    "/result/{service_name}",
+    response_model=ResponseMessage[APIKeyInfo],
+    summary="특정 서비스의 API KEY 수정",
+)
+def update_api_key(service_name: LLMServiceEnum, key_data: APIKeyUpdate) -> ResponseMessage:
+    """
+    서비스 이름을 기준으로 특정 API Key를 새로운 값으로 수정합니다.
+    - **service_name**: 수정할 서비스의 이름
+    - **api_key**: 새로운 API Key
+    """
+    # 입력값 검증
+    if not key_data.api_key or key_data.api_key.isspace():
+        raise APIException(CommonCode.INVALID_API_KEY_FORMAT)
+
+    updated_credential = api_key_service.update_api_key(service_name.value, key_data)
+
+    response_data = APIKeyInfo(
+        id=updated_credential.id,
+        service_name=updated_credential.service_name,
+        created_at=updated_credential.created_at,
+        updated_at=updated_credential.updated_at,
+    )
+
     return ResponseMessage.success(value=response_data)
