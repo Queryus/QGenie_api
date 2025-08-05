@@ -83,3 +83,44 @@ def get_api_key_by_service_name(serviceName: LLMServiceEnum):
         updated_at=db_credential.updated_at,
     )
     return ResponseMessage.success(value=response_data)
+
+
+@router.put(
+    "/modify/{serviceName}",
+    response_model=ResponseMessage[APIKeyInfo],
+    summary="특정 서비스의 API KEY 수정",
+)
+def update_api_key(serviceName: LLMServiceEnum, key_data: APIKeyUpdate) -> ResponseMessage:
+    """
+    서비스 이름을 기준으로 특정 API Key를 새로운 값으로 수정합니다.
+    - **service_name**: 수정할 서비스의 이름
+    - **api_key**: 새로운 API Key
+    """
+    # 입력값 검증
+    if not key_data.api_key or key_data.api_key.isspace():
+        raise APIException(CommonCode.INVALID_API_KEY_FORMAT)
+
+    updated_credential = api_key_service.update_api_key(serviceName.value, key_data)
+
+    response_data = APIKeyInfo(
+        id=updated_credential.id,
+        service_name=updated_credential.service_name,
+        created_at=updated_credential.created_at,
+        updated_at=updated_credential.updated_at,
+    )
+
+    return ResponseMessage.success(value=response_data)
+
+
+@router.delete(
+    "/remove/{serviceName}",
+    response_model=ResponseMessage,
+    summary="특정 서비스의 API KEY 삭제",
+)
+def delete_api_key(serviceName: LLMServiceEnum) -> ResponseMessage:
+    """
+    서비스 이름을 기준으로 특정 API Key를 삭제합니다.
+    - **serviceName**: 삭제할 서비스의 이름
+    """
+    api_key_service.delete_api_key(serviceName.value)
+    return ResponseMessage.success()
