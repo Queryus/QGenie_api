@@ -8,6 +8,6 @@ class DBTypesEnum(Enum):
     postgresql = "psycopg2"
     mysql = "mysql.connector"
     sqlite = "sqlite3"
-    oracle = "cx_Oracle"
+    oracle = "oracledb"
     sqlserver = "pyodbc"
     mariadb = "pymysql"
