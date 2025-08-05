@@ -50,7 +50,7 @@ def store_api_key(credential: APIKeyStore) -> ResponseMessage:
     이를 통해 프론트엔드에서는 비워둘 필드, 임의의 마스킹된 값을 채워둘 필드를 구분합니다.
     """,
 )
-def get_all_api_keys():
+def get_all_api_keys() -> ResponseMessage:
     """저장된 모든 API Key의 메타데이터를 조회하여 등록 여부를 확인합니다."""
     db_credentials = api_key_service.get_all_api_keys()
 
@@ -72,7 +72,7 @@ def get_all_api_keys():
     summary="특정 서비스의 API KEY 정보 조회",
     description="필요 없을 것 같음",
 )
-def get_api_key_by_service_name(serviceName: LLMServiceEnum):
+def get_api_key_by_service_name(serviceName: LLMServiceEnum) -> ResponseMessage:
     """서비스 이름을 기준으로 특정 API Key의 메타데이터를 조회합니다."""
     db_credential = api_key_service.get_api_key_by_service_name(serviceName.value)
 
@@ -86,11 +86,11 @@ def get_api_key_by_service_name(serviceName: LLMServiceEnum):
 
 
 @router.put(
-    "/result/{service_name}",
+    "/result/{serviceName}",
     response_model=ResponseMessage[APIKeyInfo],
     summary="특정 서비스의 API KEY 수정",
 )
-def update_api_key(service_name: LLMServiceEnum, key_data: APIKeyUpdate) -> ResponseMessage:
+def update_api_key(serviceName: LLMServiceEnum, key_data: APIKeyUpdate) -> ResponseMessage:
     """
     서비스 이름을 기준으로 특정 API Key를 새로운 값으로 수정합니다.
     - **service_name**: 수정할 서비스의 이름
@@ -100,7 +100,7 @@ def update_api_key(service_name: LLMServiceEnum, key_data: APIKeyUpdate) -> Resp
     if not key_data.api_key or key_data.api_key.isspace():
         raise APIException(CommonCode.INVALID_API_KEY_FORMAT)
 
-    updated_credential = api_key_service.update_api_key(service_name.value, key_data)
+    updated_credential = api_key_service.update_api_key(serviceName.value, key_data)
 
     response_data = APIKeyInfo(
         id=updated_credential.id,

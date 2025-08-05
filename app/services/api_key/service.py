@@ -69,7 +69,8 @@ def get_all_api_keys() -> list[APIKeyInDB]:
 
     # TODO: 발생가능한 에러들 전부 테스트 해보며 예외처리 세분화
     except sqlite3.Error as e:
-        print(e.__class__)
+        if "database is locked" in str(e):
+            raise APIException(CommonCode.DB_BUSY) from e
         raise APIException(CommonCode.FAIL) from e
     finally:
         if conn:
@@ -95,6 +96,8 @@ def get_api_key_by_service_name(service_name: str) -> APIKeyInDB:
 
     # TODO: 발생가능한 에러들 전부 테스트 해보며 예외처리 세분화
     except sqlite3.Error as e:
+        if "database is locked" in str(e):
+            raise APIException(CommonCode.DB_BUSY) from e
         raise APIException(CommonCode.FAIL) from e
     finally:
         if conn:
