@@ -5,7 +5,7 @@ import sqlite3
 
 from app.core.exceptions import APIException
 from app.core.status import CommonCode
-from app.schemas.driver_info import DriverInfo
+from app.schemas.driver.driver_info_model import DriverInfo
 
 
 class DriverService:

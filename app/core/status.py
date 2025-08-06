@@ -10,29 +10,62 @@ class CommonCode(Enum):
     상태 코드 참고: https://developer.mozilla.org/ko/docs/Web/HTTP/Status
     """
 
-    # ==================================
-    #    성공 (Success) - 2xx
-    # ==================================
+    # =======================================
+    #    성공 (Success) - 2xxx
+    # =======================================
+    """ 기본 성공 코드 - 20xx """
     SUCCESS = (status.HTTP_200_OK, "2000", "성공적으로 처리되었습니다.")
     CREATED = (status.HTTP_201_CREATED, "2001", "성공적으로 생성되었습니다.")
-    SUCCESS_DB_INFO = (status.HTTP_200_OK, "2100", "디비 정보 조회를 성공하였습니다.")
-    SUCCESS_DB_CONNECT = (status.HTTP_200_OK, "2101", "디비 연결을 성공하였습니다.")
 
-    # ==================================
-    #    클라이언트 오류 (Client Error) - 4xx
-    # ==================================
+    """ DRIVER, DB 성공 코드 - 21xx """
+    SUCCESS_DRIVER_INFO = (status.HTTP_200_OK, "2100", "드라이버 정보 조회를 성공하였습니다.")
+    SUCCESS_USER_DB_CONNECT_TEST = (status.HTTP_200_OK, "2101", "테스트 연결을 성공하였습니다.")
+
+    """ KEY 성공 코드 - 22xx """
+
+    """ AI CHAT, DB 성공 코드 - 23xx """
+
+    """ ANNOTATION 성공 코드 - 24xx """
+
+    """ SQL 성공 코드 - 25xx """
+
+    # =======================================
+    #    클라이언트 오류 (Client Error) - 4xxx
+    # =======================================
+    """ 기본 클라이언트 오류 코드 - 40xx """
     NO_VALUE = (status.HTTP_400_BAD_REQUEST, "4000", "필수 값이 존재하지 않습니다.")
     DUPLICATION = (status.HTTP_409_CONFLICT, "4001", "이미 존재하는 데이터입니다.")
     NO_SEARCH_DATA = (status.HTTP_404_NOT_FOUND, "4002", "요청한 데이터를 찾을 수 없습니다.")
     INVALID_PARAMETER = (status.HTTP_422_UNPROCESSABLE_ENTITY, "4003", "필수 값이 누락되었습니다.")
-    INVALID_DB_VALUE = (status.HTTP_422_UNPROCESSABLE_ENTITY, "4101", "지원하지 않는 데이터베이스 값입니다.")
-    NO_SEARCH_DB = (status.HTTP_422_UNPROCESSABLE_ENTITY, "4102", "존재하지 않는 데이터베이스 입니다.")
+
+    """ DRIVER, DB 클라이언트 오류 코드 - 41xx """
+    INVALID_DB_DRIVER = (status.HTTP_409_CONFLICT, "4100", "지원하지 않는 데이터베이스입니다.")
+    NO_DB_DRIVER = (status.HTTP_400_BAD_REQUEST, "4101", "데이터베이스는 필수 값입니다.")
+
+    """ KEY 클라이언트 오류 코드 - 42xx """
+
+    """ AI CHAT, DB 클라이언트 오류 코드 - 43xx """
+
+    """ ANNOTATION 클라이언트 오류 코드 - 44xx """
+
+    """ SQL 클라이언트 오류 코드 - 45xx """
 
     # ==================================
     #    서버 오류 (Server Error) - 5xx
     # ==================================
+    """ 기본 서버 오류 코드 - 50xx """
+    FAIL = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5000", "서버 처리 중 오류가 발생했습니다.")
+
+    """ DRIVER, DB 서버 오류 코드 - 51xx """
     FAIL_CONNECT_DB = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5100", "디비 연결 중 오류가 발생했습니다.")
-    FAIL = (status.HTTP_500_INTERNAL_SERVER_ERROR, "9999", "서버 처리 중 오류가 발생했습니다.")
+
+    """ KEY 서버 오류 코드 - 52xx """
+
+    """ AI CHAT, DB 서버 오류 코드 - 53xx """
+
+    """ ANNOTATION 서버 오류 코드 - 54xx """
+
+    """ SQL 서버 오류 코드 - 55xx """
 
     def __init__(self, http_status: int, code: str, message: str):
         """Enum 멤버가 생성될 때 각 값을 속성으로 할당합니다."""

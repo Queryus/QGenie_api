@@ -1,9 +1,12 @@
-# app/schemas/db_profile_model.py
+# app/schemas/user_db/db_profile_model.py
 
 from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
+
+from app.core.exceptions import APIException
+from app.core.status import CommonCode
 
 
 # 사용자가 직접 입력해야 하는 정보만 포함합니다.
@@ -27,11 +30,11 @@ class DBProfileCreate(BaseModel):
         }
 
         if not self.type:
-            raise ValueError("DB 종류(type)는 필수 항목입니다.")
+            raise APIException(CommonCode.NO_DB_DRIVER)
 
         db_type = self.type.lower()
         if db_type not in required_fields_by_type:
-            raise ValueError(f"지원하지 않는 DB 종류입니다: {self.type}")
+            raise APIException(CommonCode.INVALID_DB_DRIVER)
 
         missing = [
             field_name
@@ -40,7 +43,7 @@ class DBProfileCreate(BaseModel):
         ]
 
         if missing:
-            raise ValueError(f"{self.type} 연결에 필요한 값이 누락되었습니다: {missing}")
+            raise APIException(CommonCode.NO_VALUE)
 
     @staticmethod
     def _is_empty(value: Any | None) -> bool:

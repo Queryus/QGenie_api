@@ -1,4 +1,4 @@
-# app/schemas/view/connection_result_model.py
+# app/schemas/user_db/connect_test_result_model.py
 
 from pydantic import BaseModel, Field
 

@@ -1,4 +1,4 @@
-# app/schemas/driver_info.py
+# app/schemas/driver/driver_info_model.py
 from pydantic import BaseModel
 
 from app.core.enum.db_driver import DBTypesEnum
