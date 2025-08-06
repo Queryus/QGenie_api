@@ -34,7 +34,7 @@ def store_api_key(credential_data: ApiKeyCredentialCreate) -> ApiKeyCredentialIn
         created_row = cursor.fetchone()
 
         if not created_row:
-            raise APIException(CommonCode.FAIL, "Failed to retrieve the created credential.")
+            raise APIException(CommonCode.FAIL_TO_VERIFY_CREATION)
 
         return ApiKeyCredentialInDB.model_validate(dict(created_row))
 

@@ -61,7 +61,12 @@ class CommonCode(Enum):
         "5001",
         "데이터베이스가 현재 사용 중입니다. 잠시 후 다시 시도해주세요.",
     )
-
+    FAIL_TO_VERIFY_CREATION = (
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "5002",
+        "데이터 생성 후 검증 과정에서 오류가 발생했습니다.",
+    )
+    
     """ DRIVER, DB 서버 오류 코드 - 51xx """
     FAIL_CONNECT_DB = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5100", "디비 연결 중 오류가 발생했습니다.")
 
