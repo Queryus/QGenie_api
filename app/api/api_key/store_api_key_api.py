@@ -15,7 +15,7 @@ router = APIRouter()
     summary="API KEY 저장 (처음 한 번)",
     description="외부 AI 서비스의 API Key를 암호화하여 로컬 데이터베이스에 저장합니다.",
 )
-def store_api_key(credential: ApiKeyCredentialCreate) -> ResponseMessage:
+def store_api_key(credential: ApiKeyCredentialCreate) -> ResponseMessage[ApiKeyCredentialResponse]:
     """
     - **service_name**: API Key가 사용될 외부 서비스 이름 (예: "OpenAI")
     - **api_key**: 암호화하여 저장할 실제 API Key (예: "sk-***..")
