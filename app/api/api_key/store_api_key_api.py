@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 
-from app.core.exceptions import APIException
 from app.core.response import ResponseMessage
 from app.core.status import CommonCode
 from app.schemas.llm_api_key import ApiKeyCredentialCreate, ApiKeyCredentialResponse
@@ -20,12 +19,6 @@ def store_api_key(credential: ApiKeyCredentialCreate) -> ResponseMessage[ApiKeyC
     - **service_name**: API Key가 사용될 외부 서비스 이름 (예: "OpenAI")
     - **api_key**: 암호화하여 저장할 실제 API Key (예: "sk-***..")
     """
-
-    # 우선은 간단하게 존재 여부와 공백 여부로 검증
-    # TODO: 검증 로직 강화
-    if not credential.api_key or credential.api_key.isspace():
-        raise APIException(CommonCode.INVALID_API_KEY_FORMAT)
-
     created_credential = store_api_key_service.store_api_key(credential)
 
     response_data = ApiKeyCredentialResponse(
