@@ -5,6 +5,7 @@ from app.core.response import ResponseMessage
 from app.core.status import CommonCode
 from app.schemas.api_key.create_model import APIKeyCreate
 from app.schemas.api_key.response_model import APIKeyResponse
+from app.schemas.api_key.update_model import APIKeyUpdate
 from app.services.api_key_service import APIKeyService, api_key_service
 
 api_key_service_dependency = Depends(lambda: api_key_service)
@@ -82,4 +83,31 @@ def get_api_key_by_service_name(
         created_at=db_credential.created_at,
         updated_at=db_credential.updated_at,
     )
+    return ResponseMessage.success(value=response_data)
+
+
+@router.put(
+    "/modify/{serviceName}",
+    response_model=ResponseMessage[APIKeyResponse],
+    summary="특정 서비스의 API KEY 수정",
+)
+def update_api_key(
+    serviceName: LLMServiceEnum,
+    key_data: APIKeyUpdate,
+    service: APIKeyService = api_key_service_dependency,
+) -> ResponseMessage[APIKeyResponse]:
+    """
+    서비스 이름을 기준으로 특정 API Key를 새로운 값으로 수정합니다.
+    - **service_name**: 수정할 서비스의 이름
+    - **api_key**: 새로운 API Key
+    """
+    updated_credential = service.update_api_key(serviceName.value, key_data)
+
+    response_data = APIKeyResponse(
+        id=updated_credential.id,
+        service_name=updated_credential.service_name,
+        created_at=updated_credential.created_at,
+        updated_at=updated_credential.updated_at,
+    )
+
     return ResponseMessage.success(value=response_data)

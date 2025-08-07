@@ -9,6 +9,7 @@ from app.core.utils import generate_prefixed_uuid
 from app.repository.api_key_repository import APIKeyRepository, api_key_repository
 from app.schemas.api_key.create_model import APIKeyCreate
 from app.schemas.api_key.db_model import APIKeyInDB
+from app.schemas.api_key.update_model import APIKeyUpdate
 
 api_key_repository_dependency = Depends(lambda: api_key_repository)
 
@@ -57,6 +58,21 @@ class APIKeyService:
                 raise APIException(CommonCode.NO_SEARCH_DATA)
             return api_key
         except sqlite3.Error as e:
+            raise APIException(CommonCode.FAIL) from e
+
+    def update_api_key(self, service_name: str, key_data: APIKeyUpdate) -> APIKeyInDB:
+        """서비스 이름에 해당하는 API Key를 수정합니다."""
+        try:
+            encrypted_key = AES256.encrypt(key_data.api_key)
+            updated_api_key = self.repository.update_api_key(service_name, encrypted_key)
+
+            if not updated_api_key:
+                raise APIException(CommonCode.NO_SEARCH_DATA)
+
+            return updated_api_key
+        except sqlite3.Error as e:
+            if "database is locked" in str(e):
+                raise APIException(CommonCode.DB_BUSY) from e
             raise APIException(CommonCode.FAIL) from e
 
 
