@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from app.core.enum.llm_service import LLMServiceEnum
+from app.core.enum.llm_service_info import LLMServiceEnum
 
 
 class APIKeyBase(BaseModel):
