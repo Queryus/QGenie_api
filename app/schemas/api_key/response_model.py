@@ -1,4 +1,3 @@
-# app/schemas/api_key/response_model.py
 from datetime import datetime
 
 from pydantic import Field

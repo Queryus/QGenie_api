@@ -1,4 +1,3 @@
-# app/schemas/api_key/db_model.py
 from datetime import datetime
 
 from app.schemas.api_key.base_model import APIKeyBase

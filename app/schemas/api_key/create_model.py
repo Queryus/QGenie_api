@@ -1,4 +1,3 @@
-# app/schemas/api_key/create_model.py
 from pydantic import Field, field_validator
 
 from app.schemas.api_key.base_model import APIKeyBase

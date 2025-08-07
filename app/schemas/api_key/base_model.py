@@ -1,4 +1,3 @@
-# app/schemas/api_key/base_model.py
 from pydantic import BaseModel, Field
 
 from app.core.enum.llm_service import LLMServiceEnum
