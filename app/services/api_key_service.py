@@ -62,6 +62,7 @@ class APIKeyService:
 
     def update_api_key(self, service_name: str, key_data: APIKeyUpdate) -> APIKeyInDB:
         """서비스 이름에 해당하는 API Key를 수정합니다."""
+        key_data.validate_with_api_key()
         try:
             encrypted_key = AES256.encrypt(key_data.api_key)
             updated_api_key = self.repository.update_api_key(service_name, encrypted_key)

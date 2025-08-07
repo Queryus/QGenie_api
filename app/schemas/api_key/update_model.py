@@ -1,4 +1,7 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
+
+from app.core.exceptions import APIException
+from app.core.status import CommonCode
 
 
 class APIKeyUpdate(BaseModel):
@@ -6,9 +9,8 @@ class APIKeyUpdate(BaseModel):
 
     api_key: str = Field(..., description="새로운 API Key")
 
-    @field_validator("api_key", mode="after")
-    @classmethod
-    def validate_api_key(cls, v: str) -> str:
-        if not v or v.isspace():
-            raise ValueError("API key cannot be empty or just whitespace.")
-        return v
+    def validate_with_api_key(self) -> None:
+        """API Key의 유효성을 검증합니다."""
+        # 기본 형식 검증 (공백 또는 빈 문자열)
+        if not self.api_key or self.api_key.isspace():
+            raise APIException(CommonCode.INVALID_API_KEY_FORMAT)
