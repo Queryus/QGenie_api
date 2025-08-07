@@ -108,5 +108,31 @@ class APIKeyRepository:
             if conn:
                 conn.close()
 
+    def delete_api_key(self, service_name: str) -> bool:
+        """서비스 이름에 해당하는 API Key를 삭제하고, 성공 여부를 반환합니다."""
+        db_path = get_db_path()
+        conn = None
+        try:
+            conn = sqlite3.connect(str(db_path), timeout=10)
+            cursor = conn.cursor()
+
+            # 먼저 해당 서비스의 데이터가 존재하는지 확인
+            cursor.execute("SELECT id FROM ai_credential WHERE service_name = ?", (service_name,))
+            if not cursor.fetchone():
+                return False
+
+            # 데이터 삭제
+            cursor.execute("DELETE FROM ai_credential WHERE service_name = ?", (service_name,))
+            conn.commit()
+
+            # rowcount가 0이면 삭제된 행이 없음 (정상적인 경우 발생하기 어려움)
+            if cursor.rowcount == 0:
+                return False
+
+            return cursor.rowcount > 0
+        finally:
+            if conn:
+                conn.close()
+
 
 api_key_repository = APIKeyRepository()
