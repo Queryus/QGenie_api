@@ -4,14 +4,15 @@ from app.core.exceptions import APIException
 from app.core.security import AES256
 from app.core.status import CommonCode
 from app.core.utils import generate_prefixed_uuid, get_db_path
-from app.schemas.llm_api_key import ApiKeyCredentialCreate, ApiKeyCredentialInDB
+from app.schemas.api_key.create_model import APIKeyCreate
+from app.schemas.api_key.db_model import APIKeyInDB
 
 
-def store_api_key(credential_data: ApiKeyCredentialCreate) -> ApiKeyCredentialInDB:
+def store_api_key(credential_data: APIKeyCreate) -> APIKeyInDB:
     """API_KEY를 암호화하여 데이터베이스에 저장합니다."""
 
     encrypted_key = AES256.encrypt(credential_data.api_key)
-    new_id = generate_prefixed_uuid()
+    new_id = generate_prefixed_uuid("QGENIE")
 
     db_path = get_db_path()
     conn = None
@@ -36,7 +37,7 @@ def store_api_key(credential_data: ApiKeyCredentialCreate) -> ApiKeyCredentialIn
         if not created_row:
             raise APIException(CommonCode.FAIL_TO_VERIFY_CREATION)
 
-        return ApiKeyCredentialInDB.model_validate(dict(created_row))
+        return APIKeyInDB.model_validate(dict(created_row))
 
     except sqlite3.IntegrityError as e:
         # UNIQUE 제약 조건 위반 (service_name)
