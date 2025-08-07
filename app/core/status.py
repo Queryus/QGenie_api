@@ -43,6 +43,12 @@ class CommonCode(Enum):
     NO_DB_DRIVER = (status.HTTP_400_BAD_REQUEST, "4101", "데이터베이스는 필수 값입니다.")
 
     """ KEY 클라이언트 오류 코드 - 42xx """
+    INVALID_API_KEY_FORMAT = (status.HTTP_400_BAD_REQUEST, "4200", "API 키의 형식이 올바르지 않습니다.")
+    INVALID_API_KEY_PREFIX = (
+        status.HTTP_400_BAD_REQUEST,
+        "4201",
+        "API 키가 선택한 서비스의 올바른 형식이 아닙니다. (예: OpenAI는 sk-로 시작)",
+    )
 
     """ AI CHAT, DB 클라이언트 오류 코드 - 43xx """
 
@@ -55,6 +61,16 @@ class CommonCode(Enum):
     # ==================================
     """ 기본 서버 오류 코드 - 50xx """
     FAIL = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5000", "서버 처리 중 오류가 발생했습니다.")
+    DB_BUSY = (
+        status.HTTP_503_SERVICE_UNAVAILABLE,
+        "5001",
+        "데이터베이스가 현재 사용 중입니다. 잠시 후 다시 시도해주세요.",
+    )
+    FAIL_TO_VERIFY_CREATION = (
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "5002",
+        "데이터 생성 후 검증 과정에서 오류가 발생했습니다.",
+    )
 
     """ DRIVER, DB 서버 오류 코드 - 51xx """
     FAIL_CONNECT_DB = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5100", "디비 연결 중 오류가 발생했습니다.")
