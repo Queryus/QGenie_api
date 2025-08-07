@@ -111,3 +111,17 @@ def update_api_key(
     )
 
     return ResponseMessage.success(value=response_data)
+
+
+@router.delete(
+    "/remove/{serviceName}",
+    response_model=ResponseMessage,
+    summary="특정 서비스의 API KEY 삭제",
+)
+def delete_api_key(serviceName: LLMServiceEnum, service: APIKeyService = api_key_service_dependency) -> ResponseMessage:
+    """
+    서비스 이름을 기준으로 특정 API Key를 삭제합니다.
+    - **service_name**: 삭제할 서비스의 이름
+    """
+    service.delete_api_key(serviceName.value)
+    return ResponseMessage.success()

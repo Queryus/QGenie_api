@@ -76,5 +76,16 @@ class APIKeyService:
                 raise APIException(CommonCode.DB_BUSY) from e
             raise APIException(CommonCode.FAIL) from e
 
+    def delete_api_key(self, service_name: str) -> None:
+        """서비스 이름에 해당하는 API Key를 삭제합니다."""
+        try:
+            is_deleted = self.repository.delete_api_key(service_name)
+            if not is_deleted:
+                raise APIException(CommonCode.NO_SEARCH_DATA)
+        except sqlite3.Error as e:
+            if "database is locked" in str(e):
+                raise APIException(CommonCode.DB_BUSY) from e
+            raise APIException(CommonCode.FAIL) from e
+
 
 api_key_service = APIKeyService()
