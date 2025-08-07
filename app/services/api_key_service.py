@@ -18,16 +18,16 @@ class APIKeyService:
     def __init__(self, repository: APIKeyRepository = api_key_repository):
         self.repository = repository
 
-    def store_api_key(self, credential_data: APIKeyCreate) -> APIKeyInDB:
+    def store_api_key(self, api_key_data: APIKeyCreate) -> APIKeyInDB:
         """API_KEY를 암호화하고 repository를 통해 데이터베이스에 저장합니다."""
-        credential_data.validate_with_service()
+        api_key_data.validate_with_service()
         try:
-            encrypted_key = AES256.encrypt(credential_data.api_key)
+            encrypted_key = AES256.encrypt(api_key_data.api_key)
             new_id = generate_prefixed_uuid("QGENIE")
 
             created_row = self.repository.create_api_key(
                 new_id=new_id,
-                service_name=credential_data.service_name.value,
+                service_name=api_key_data.service_name.value,
                 encrypted_key=encrypted_key,
             )
 
