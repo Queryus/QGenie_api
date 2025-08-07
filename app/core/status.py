@@ -24,6 +24,7 @@ class CommonCode(Enum):
     """ KEY 성공 코드 - 22xx """
 
     """ AI CHAT, DB 성공 코드 - 23xx """
+    SUCCESS_AI_CHAT_CREATE = (status.HTTP_200_OK, "2300", "새로운 채팅 탭을 생성하였습니다.")
 
     """ ANNOTATION 성공 코드 - 24xx """
 
@@ -51,6 +52,18 @@ class CommonCode(Enum):
     )
 
     """ AI CHAT, DB 클라이언트 오류 코드 - 43xx """
+    INVALID_CHAT_NAME_FORMAT = (status.HTTP_400_BAD_REQUEST, "4300", "채팅 탭 이름의 형식이 올바르지 않습니다.")
+    INVALID_CHAT_NAME_LENGTH = (
+        status.HTTP_400_BAD_REQUEST,
+        "4301",
+        "채팅 탭 이름의 길이는 255자를 초과할 수 없습니다.",
+    )
+    INVALID_CHAT_NAME_CONTENT = (
+        status.HTTP_400_BAD_REQUEST,
+        "4302",
+        "채팅 탭 이름에 SQL 예약어나 허용되지 않는 특수문자가 포함되어 있습니다. "
+        "허용되지 않는 특수 문자: 큰따옴표(\"), 작은따옴표('), 세미콜론(;), 꺾쇠괄호(<, >)",
+    )
 
     """ ANNOTATION 클라이언트 오류 코드 - 44xx """
 
