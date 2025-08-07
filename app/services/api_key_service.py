@@ -18,6 +18,7 @@ class APIKeyService:
         self, credential_data: APIKeyCreate, repository: APIKeyRepository = api_key_repository
     ) -> APIKeyInDB:
         """API_KEY를 암호화하고 repository를 통해 데이터베이스에 저장합니다."""
+        credential_data.validate_with_service()
         try:
             encrypted_key = AES256.encrypt(credential_data.api_key)
             new_id = generate_prefixed_uuid("QGENIE")

@@ -44,6 +44,11 @@ class CommonCode(Enum):
 
     """ KEY 클라이언트 오류 코드 - 42xx """
     INVALID_API_KEY_FORMAT = (status.HTTP_400_BAD_REQUEST, "4200", "API 키의 형식이 올바르지 않습니다.")
+    INVALID_API_KEY_PREFIX = (
+        status.HTTP_400_BAD_REQUEST,
+        "4201",
+        "API 키가 선택한 서비스의 올바른 형식이 아닙니다. (예: OpenAI는 sk-로 시작)",
+    )
 
     """ AI CHAT, DB 클라이언트 오류 코드 - 43xx """
 
@@ -66,7 +71,7 @@ class CommonCode(Enum):
         "5002",
         "데이터 생성 후 검증 과정에서 오류가 발생했습니다.",
     )
-    
+
     """ DRIVER, DB 서버 오류 코드 - 51xx """
     FAIL_CONNECT_DB = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5100", "디비 연결 중 오류가 발생했습니다.")
 
