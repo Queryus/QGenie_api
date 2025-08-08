@@ -56,17 +56,3 @@ class DBProfileInfo(BaseModel):
 class SaveDBProfile(DBProfileInfo):
     id: str | None = Field(None, description="DB Key 값")
     view_name: str | None = Field(None, description="DB 노출명")
-
-# DB에서 조회되는 모든 정보를 담는 클래스입니다.
-class DBProfile(BaseModel):
-    id: str
-    type: str
-    host: str
-    port: int
-    name: str | None
-    username: str
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
