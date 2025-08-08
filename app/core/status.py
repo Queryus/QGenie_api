@@ -20,7 +20,9 @@ class CommonCode(Enum):
     """ DRIVER, DB 성공 코드 - 21xx """
     SUCCESS_DRIVER_INFO = (status.HTTP_200_OK, "2100", "드라이버 정보 조회를 성공하였습니다.")
     SUCCESS_USER_DB_CONNECT_TEST = (status.HTTP_200_OK, "2101", "테스트 연결을 성공하였습니다.")
-    SUCCESS_SAVE_DB_PROFILE = (status.HTTP_200_OK, "2102", "DB 연결 정보를 저장하였습니다.")
+    SUCCESS_FIND_ALL_PROFILE = (status.HTTP_200_OK, "2102", "DB 정보 조회를 성공하였습니다.")
+    SUCCESS_SAVE_DB_PROFILE = (status.HTTP_200_OK, "2132", "DB 연결 정보를 저장하였습니다.")
+
 
     """ KEY 성공 코드 - 22xx """
 
@@ -89,6 +91,7 @@ class CommonCode(Enum):
     """ DRIVER, DB 서버 에러 코드 - 51xx """
     FAIL_CONNECT_DB = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5100", "디비 연결 중 에러가 발생했습니다.")
     FAIL_SAVE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5100", "디비 정보 저장 중 에러가 발생했습니다.")
+    FAIL_FIND_ALL_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5100", "디비 정보 조회 중 에러가 발생했습니다.")
 
     """ KEY 서버 에러 코드 - 52xx """
 
