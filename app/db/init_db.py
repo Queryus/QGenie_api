@@ -143,6 +143,114 @@ def initialize_database():
         """
         )
 
+        # database_annotation 테이블 생성
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS database_annotation (
+                id VARCHAR(64) PRIMARY KEY NOT NULL,
+                db_profile_id VARCHAR(64) NOT NULL,
+                database_name VARCHAR(255) NOT NULL,
+                description TEXT,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (db_profile_id) REFERENCES db_profile(id) ON DELETE CASCADE
+            );
+            """
+        )
+        # database_annotation 테이블의 updated_at을 자동으로 업데이트하는 트리거
+        cursor.execute(
+            """
+            CREATE TRIGGER IF NOT EXISTS update_database_annotation_updated_at
+            BEFORE UPDATE ON database_annotation
+            FOR EACH ROW
+            BEGIN
+                UPDATE database_annotation SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;
+            """
+        )
+
+        # table_annotation 테이블 생성
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS table_annotation (
+                id VARCHAR(64) PRIMARY KEY NOT NULL,
+                database_annotation_id VARCHAR(64) NOT NULL,
+                table_name VARCHAR(255) NOT NULL,
+                description TEXT,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (database_annotation_id) REFERENCES database_annotation(id) ON DELETE CASCADE
+            );
+            """
+        )
+        # table_annotation 테이블의 updated_at을 자동으로 업데이트하는 트리거
+        cursor.execute(
+            """
+            CREATE TRIGGER IF NOT EXISTS update_table_annotation_updated_at
+            BEFORE UPDATE ON table_annotation
+            FOR EACH ROW
+            BEGIN
+                UPDATE table_annotation SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;
+            """
+        )
+
+        # column_annotation 테이블 생성
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS column_annotation (
+                id VARCHAR(64) PRIMARY KEY NOT NULL,
+                table_annotation_id VARCHAR(64) NOT NULL,
+                column_name VARCHAR(255) NOT NULL,
+                description TEXT,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (table_annotation_id) REFERENCES table_annotation(id) ON DELETE CASCADE
+            );
+            """
+        )
+        # column_annotation 테이블의 updated_at을 자동으로 업데이트하는 트리거
+        cursor.execute(
+            """
+            CREATE TRIGGER IF NOT EXISTS update_column_annotation_updated_at
+            BEFORE UPDATE ON column_annotation
+            FOR EACH ROW
+            BEGIN
+                UPDATE column_annotation SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;
+            """
+        )
+
+        # table_relationship 테이블 생성
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS table_relationship (
+                id VARCHAR(64) PRIMARY KEY NOT NULL,
+                database_annotation_id VARCHAR(64) NOT NULL,
+                from_table_id VARCHAR(64) NOT NULL,
+                to_table_id VARCHAR(64) NOT NULL,
+                relationship_type VARCHAR(32) NOT NULL,
+                description TEXT,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (database_annotation_id) REFERENCES database_annotation(id) ON DELETE CASCADE,
+                FOREIGN KEY (from_table_id) REFERENCES table_annotation(id) ON DELETE CASCADE,
+                FOREIGN KEY (to_table_id) REFERENCES table_annotation(id) ON DELETE CASCADE
+            );
+            """
+        )
+        # table_relationship 테이블의 updated_at을 자동으로 업데이트하는 트리거
+        cursor.execute(
+            """
+            CREATE TRIGGER IF NOT EXISTS update_table_relationship_updated_at
+            BEFORE UPDATE ON table_relationship
+            FOR EACH ROW
+            BEGIN
+                UPDATE table_relationship SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+            END;
+            """
+        )
+
         conn.commit()
 
     except sqlite3.Error as e:
