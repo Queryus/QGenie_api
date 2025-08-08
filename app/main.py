@@ -14,7 +14,13 @@ from app.core.exceptions import (
 )
 from app.db.init_db import initialize_database
 
+from starlette.middleware.base import BaseHTTPMiddleware
+from app.core.all_logging import log_requests_middleware
+
 app = FastAPI()
+
+# 전체 로그 찍는 부분
+app.add_middleware(BaseHTTPMiddleware, dispatch=log_requests_middleware)
 
 # 전역 예외 처리기 등록
 app.add_exception_handler(Exception, generic_exception_handler)
