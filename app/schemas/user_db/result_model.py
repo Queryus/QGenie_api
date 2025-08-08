@@ -12,4 +12,4 @@ class BasicResult(BaseModel):
 # 디비 정보 저장
 class SaveProfileResult(BasicResult):
     """DB 조회 결과를 위한 확장 모델"""
-    name: str = Field(..., description="저장된 디비명")
+    view_name: str = Field(..., description="저장된 디비명")
