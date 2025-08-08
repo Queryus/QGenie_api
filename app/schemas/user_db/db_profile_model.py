@@ -10,14 +10,13 @@ from app.core.status import CommonCode
 
 
 # 사용자가 직접 입력해야 하는 정보만 포함합니다.
-class DBProfileCreate(BaseModel):
+class DBProfileInfo(BaseModel):
     type: str = Field(..., description="DB 종류")
     host: str | None = Field(None, description="호스트 주소")
     port: int | None = Field(None, description="포트 번호")
+    name: str | None = Field(None, description="연결할 데이터베이스명")
     username: str | None = Field(None, description="사용자 이름")
     password: str | None = Field(None, description="비밀번호")
-    name: str | None = Field(None, description="데이터베이스 이름")
-    driver: str | None = Field(None, description="드라이버 이름")
 
     def validate_required_fields(self) -> None:
         """DB 종류별 필수 필드 유효성 검사"""
@@ -54,6 +53,9 @@ class DBProfileCreate(BaseModel):
             return True
         return False
 
+class SaveDBProfile(DBProfileInfo):
+    id: str | None = Field(None, description="DB Key 값")
+    view_name: str | None = Field(None, description="DB 노출명")
 
 # DB에서 조회되는 모든 정보를 담는 클래스입니다.
 class DBProfile(BaseModel):
