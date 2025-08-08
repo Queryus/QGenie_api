@@ -10,7 +10,7 @@ from app.core.enum.db_driver import DBTypesEnum
 from app.core.exceptions import APIException
 from app.core.status import CommonCode
 from app.repository.user_db_repository import UserDbRepository, user_db_repository
-from app.schemas.user_db.result_model import BasicResult, SaveProfileResult
+from app.schemas.user_db.result_model import BasicResult, SaveProfileResult, AllDBProfileResult
 from app.schemas.user_db.db_profile_model import DBProfileInfo, SaveDBProfile
 from app.core.utils import generate_prefixed_uuid
 from app.core.enum.db_key_prefix_name import DBSaveIdEnum
@@ -25,7 +25,7 @@ class UserDbService:
         repository: UserDbRepository = user_db_repository
     ) -> BasicResult:
         """
-        DB 연결 정보를 받아 연결 테스트를 수행하고 결과를 객체로 반환합니다.
+        DB 연결 정보를 받아 연결 테스트를 수행 후 결과를 반환합니다.
         """
         try:
             driver_module = self._get_driver_module(db_info.type)
@@ -40,11 +40,23 @@ class UserDbService:
         repository: UserDbRepository = user_db_repository
     ) -> SaveProfileResult:
         """
-        DB 연결 정보를 저장 후 결과를 객체로 반환합니다.
+        DB 연결 정보를 저장 후 결과를 반환합니다.
         """
         save_db_info.id = generate_prefixed_uuid(DBSaveIdEnum.user_db.value)
         try:
             return repository.save_profile(save_db_info)
+        except Exception as e:
+            raise APIException(CommonCode.FAIL) from e
+
+    def find_all_profile(
+        self,
+        repository: UserDbRepository = user_db_repository
+    ) -> AllDBProfileResult:
+        """
+        모든 DB 연결 정보를 반환합니다.
+        """
+        try:
+            return repository.find_all_profile()
         except Exception as e:
             raise APIException(CommonCode.FAIL) from e
 

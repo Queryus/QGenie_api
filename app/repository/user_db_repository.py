@@ -4,7 +4,7 @@ import oracledb
 import sqlite3
 
 from app.core.status import CommonCode
-from app.schemas.user_db.result_model import BasicResult, SaveProfileResult
+from app.schemas.user_db.result_model import BasicResult, SaveProfileResult, AllDBProfileResult, DBProfile
 from app.schemas.user_db.db_profile_model import SaveDBProfile
 from app.core.utils import get_db_path
 
@@ -75,6 +75,33 @@ class UserDbRepository:
             return SaveProfileResult(is_successful=False, code=CommonCode.FAIL_SAVE_PROFILE)
         except Exception:
             return SaveProfileResult(is_successful=False, code=CommonCode.FAIL_SAVE_PROFILE)
+        finally:
+            if connection:
+                connection.close()
+
+    def find_all_profile(
+        self
+    ) -> AllDBProfileResult:
+        """
+        모든 DB 연결 정보를 조회합니다.
+        """
+        db_path = get_db_path()
+        connection = None
+        try:
+            connection = sqlite3.connect(db_path)
+            connection.row_factory = sqlite3.Row
+            cursor = connection.cursor()
+
+            sql = "SELECT * FROM db_profile"
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            profiles = [DBProfile(**row) for row in rows]
+
+            return AllDBProfileResult(is_successful=True, code=CommonCode.SUCCESS_FIND_ALL_PROFILE, profiles=profiles)
+        except sqlite3.Error:
+            return AllDBProfileResult(is_successful=False, code=CommonCode.FAIL_FIND_ALL_PROFILE)
+        except Exception:
+            return AllDBProfileResult(is_successful=False, code=CommonCode.FAIL_FIND_ALL_PROFILE)
         finally:
             if connection:
                 connection.close()
