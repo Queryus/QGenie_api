@@ -23,7 +23,7 @@ class APIKeyService:
         api_key_data.validate_with_service()
         try:
             encrypted_key = AES256.encrypt(api_key_data.api_key)
-            new_id = generate_prefixed_uuid("QGENIE")
+            new_id = generate_prefixed_uuid("APIKEY")
 
             created_row = self.repository.create_api_key(
                 new_id=new_id,
