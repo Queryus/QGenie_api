@@ -30,6 +30,9 @@ class CommonCode(Enum):
 
 
     """ KEY 성공 코드 - 22xx """
+    SUCCESS_DELETE_API_KEY = (status.HTTP_204_NO_CONTENT, "2200", "API KEY가 성공적으로 삭제되었습니다.")
+    SUCCESS_UPDATE_API_KEY = (status.HTTP_200_OK, "2201", "API KEY가 성공적으로 수정되었습니다.")
+    SUCCESS_GET_API_KEY = (status.HTTP_200_OK, "2202", "API KEY 정보를 성공적으로 조회했습니다.")
 
     """ AI CHAT, DB 성공 코드 - 23xx """
     SUCCESS_AI_CHAT_CREATE = (status.HTTP_200_OK, "2300", "새로운 채팅 탭을 생성하였습니다.")
