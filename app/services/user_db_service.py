@@ -10,24 +10,42 @@ from app.core.enum.db_driver import DBTypesEnum
 from app.core.exceptions import APIException
 from app.core.status import CommonCode
 from app.repository.user_db_repository import UserDbRepository, user_db_repository
-from app.schemas.user_db.connect_test_result_model import TestConnectionResult
-from app.schemas.user_db.db_profile_model import DBProfileCreate
+from app.schemas.user_db.result_model import BasicResult, SaveProfileResult
+from app.schemas.user_db.db_profile_model import DBProfileInfo, SaveDBProfile
+from app.core.utils import generate_prefixed_uuid
+from app.core.enum.db_key_prefix_name import DBSaveIdEnum
 
 user_db_repository_dependency = Depends(lambda: user_db_repository)
 
 
 class UserDbService:
     def connection_test(
-        self, db_info: DBProfileCreate, repository: UserDbRepository = user_db_repository
-    ) -> TestConnectionResult:
+        self,
+        db_info: DBProfileInfo,
+        repository: UserDbRepository = user_db_repository
+    ) -> BasicResult:
         """
         DB 연결 정보를 받아 연결 테스트를 수행하고 결과를 객체로 반환합니다.
         """
         try:
             driver_module = self._get_driver_module(db_info.type)
             connect_kwargs = self._prepare_connection_args(db_info)
-            return repository.test_db_connection(driver_module, **connect_kwargs)
-        except (ValueError, ImportError) as e:
+            return repository.connection_test(driver_module, **connect_kwargs)
+        except Exception as e:
+            raise APIException(CommonCode.FAIL) from e
+
+    def save_profile(
+        self,
+        save_db_info: SaveDBProfile,
+        repository: UserDbRepository = user_db_repository
+    ) -> SaveProfileResult:
+        """
+        DB 연결 정보를 저장 후 결과를 객체로 반환합니다.
+        """
+        save_db_info.id = generate_prefixed_uuid(DBSaveIdEnum.user_db.value)
+        try:
+            return repository.save_profile(save_db_info)
+        except Exception as e:
             raise APIException(CommonCode.FAIL) from e
 
     def _get_driver_module(self, db_type: str):
@@ -39,7 +57,7 @@ class UserDbService:
             return sqlite3
         return importlib.import_module(driver_name)
 
-    def _prepare_connection_args(self, db_info: DBProfileCreate) -> dict[str, Any]:
+    def _prepare_connection_args(self, db_info: DBProfileInfo) -> dict[str, Any]:
         """
         DB 타입에 따라 연결에 필요한 매개변수를 딕셔너리로 구성합니다.
         """
