@@ -1,7 +1,7 @@
 import sqlite3
 
 from app.core.utils import get_db_path
-from app.schemas.ai_chat.db_model import AIChatInDB
+from app.schemas.chat_tab.db_model import AIChatInDB
 
 
 class AIChatRepository:

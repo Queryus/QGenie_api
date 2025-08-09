@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import Field
 
-from app.schemas.ai_chat.base_model import AIChatBase
+from app.schemas.chat_tab.base_model import AIChatBase
 
 
 class AIChatResponse(AIChatBase):

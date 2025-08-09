@@ -5,9 +5,9 @@ from fastapi import Depends
 from app.core.exceptions import APIException
 from app.core.status import CommonCode
 from app.core.utils import generate_prefixed_uuid
-from app.repository.ai_chat_repository import AIChatRepository, ai_chat_repository
-from app.schemas.ai_chat.create_model import AIChatCreate
-from app.schemas.ai_chat.db_model import AIChatInDB
+from app.repository.chat_tab_repository import AIChatRepository, ai_chat_repository
+from app.schemas.chat_tab.create_model import AIChatCreate
+from app.schemas.chat_tab.db_model import AIChatInDB
 
 ai_chat_repository_dependency = Depends(lambda: ai_chat_repository)
 

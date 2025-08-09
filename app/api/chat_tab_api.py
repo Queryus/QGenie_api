@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends
 
 from app.core.response import ResponseMessage
 from app.core.status import CommonCode
-from app.schemas.ai_chat.create_model import AIChatCreate
-from app.schemas.ai_chat.response_model import AIChatResponse
-from app.services.ai_chat_service import AIChatService, ai_chat_service
+from app.schemas.chat_tab.create_model import AIChatCreate
+from app.schemas.chat_tab.response_model import AIChatResponse
+from app.services.chat_tab_service import AIChatService, ai_chat_service
 
 ai_chat_service_dependency = Depends(lambda: ai_chat_service)
 

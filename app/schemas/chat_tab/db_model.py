@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app.schemas.ai_chat.base_model import AIChatBase
+from app.schemas.chat_tab.base_model import AIChatBase
 
 
 class AIChatInDB(AIChatBase):
