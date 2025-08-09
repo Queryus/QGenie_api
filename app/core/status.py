@@ -56,7 +56,7 @@ class CommonCode(Enum):
     INVALID_CHAT_TAB_NAME_LENGTH = (
         status.HTTP_400_BAD_REQUEST,
         "4301",
-        "채팅 탭 이름의 길이는 255자를 초과할 수 없습니다.",
+        "채팅 탭 이름의 길이는 128자를 초과할 수 없습니다.",
     )
     INVALID_CHAT_TAB_NAME_CONTENT = (
         status.HTTP_400_BAD_REQUEST,

@@ -15,7 +15,7 @@ class AIChatCreate(AIChatBase):
             raise APIException(CommonCode.INVALID_CHAT_TAB_NAME_FORMAT)
 
         # 2. 길이 제한
-        if len(self.name) > 255:
+        if len(self.name) > 128:
             raise APIException(CommonCode.INVALID_CHAT_TAB_NAME_LENGTH)
 
         # 3. 특수문자 및 SQL 예약어 확인

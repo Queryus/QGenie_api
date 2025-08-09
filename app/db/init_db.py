@@ -72,7 +72,7 @@ def initialize_database():
             """
             CREATE TABLE IF NOT EXISTS chat_tab (
                 id VARCHAR(64) PRIMARY KEY NOT NULL,
-                name VARCHAR(255),
+                name VARCHAR(128),
                 created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
