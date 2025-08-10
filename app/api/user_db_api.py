@@ -50,7 +50,7 @@ def save_profile(
 @router.put(
     "/modify/profile",
     response_model=ResponseMessage[str],
-    summary="DB 프로필 저장",
+    summary="DB 프로필 업데이트",
 )
 def modify_profile(
     modify_db_info: UpdateOrSaveDBProfile,
@@ -59,6 +59,22 @@ def modify_profile(
 
     modify_db_info.validate_required_fields()
     result = service.modify_profile(modify_db_info)
+
+    if not result.is_successful:
+        raise APIException(result.code)
+    return ResponseMessage.success(value=result.view_name, code=result.code)
+
+@router.delete(
+    "/remove/{profile_id}",
+    response_model=ResponseMessage[str],
+    summary="DB 프로필 삭제",
+)
+def remove_profile(
+    profile_id: str,
+    service: UserDbService = user_db_service_dependency,
+) -> ResponseMessage[str]:
+
+    result = service.remove_profile(profile_id)
 
     if not result.is_successful:
         raise APIException(result.code)
