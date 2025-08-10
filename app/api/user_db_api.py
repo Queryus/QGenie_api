@@ -70,12 +70,12 @@ def update_profile(
     response_model=ResponseMessage[str],
     summary="DB 프로필 삭제",
 )
-def remove_profile(
+def delete_profile(
     profile_id: str,
     service: UserDbService = user_db_service_dependency,
 ) -> ResponseMessage[str]:
 
-    result = service.remove_profile(profile_id)
+    result = service.delete_profile(profile_id)
 
     if not result.is_successful:
         raise APIException(result.code)

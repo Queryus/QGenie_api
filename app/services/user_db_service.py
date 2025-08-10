@@ -71,7 +71,7 @@ class UserDbService:
         except Exception as e:
             raise APIException(CommonCode.FAIL) from e
 
-    def remove_profile(
+    def delete_profile(
         self,
         profile_id: str,
         repository: UserDbRepository = user_db_repository
@@ -80,7 +80,7 @@ class UserDbService:
         DB 연결 정보를 삭제 후 결과를 반환합니다.
         """
         try:
-            return repository.remove_profile(profile_id)
+            return repository.delete_profile(profile_id)
         except Exception as e:
             raise APIException(CommonCode.FAIL) from e
 

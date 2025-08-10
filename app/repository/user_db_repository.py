@@ -127,7 +127,7 @@ class UserDbRepository:
             if connection:
                 connection.close()
 
-    def remove_profile(
+    def delete_profile(
         self,
         profile_id: str,
     ) -> ChangeProfileResult:
