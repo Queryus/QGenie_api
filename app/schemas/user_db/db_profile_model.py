@@ -52,7 +52,7 @@ class DBProfileInfo(BaseModel):
             return True
         return False
 
-class SaveDBProfile(DBProfileInfo):
+class UpdateOrSaveDBProfile(DBProfileInfo):
     id: str | None = Field(None, description="DB Key 값")
     view_name: str | None = Field(None, description="DB 노출명")
 
