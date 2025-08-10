@@ -32,20 +32,7 @@ class UserDbRepository:
         """
         connection = None
         try:
-            if driver_module is oracledb:
-                if kwargs.get("user").lower() == "sys":
-                    kwargs["mode"] = oracledb.AUTH_MODE_SYSDBA
-                connection = driver_module.connect(**kwargs)
-            # MSSQL과 같이 전체 연결 문자열이 제공된 경우
-            elif "connection_string" in kwargs:
-                connection = driver_module.connect(kwargs["connection_string"])
-            # SQLite와 같이 파일 이름만 필요한 경우
-            elif "db_name" in kwargs:
-                connection = driver_module.connect(kwargs["db_name"])
-            # 그 외 (MySQL, PostgreSQL, Oracle 등) 일반적인 키워드 인자 방식 연결
-            else:
-                connection = driver_module.connect(**kwargs)
-
+            connection = self._connect(driver_module, **kwargs)
             return BasicResult(is_successful=True, code=CommonCode.SUCCESS_USER_DB_CONNECT_TEST)
         except (AttributeError, driver_module.OperationalError, driver_module.DatabaseError) as e:
             return BasicResult(is_successful=False, code=CommonCode.FAIL_CONNECT_DB)
