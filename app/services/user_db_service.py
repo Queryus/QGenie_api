@@ -13,7 +13,7 @@ from app.core.utils import generate_prefixed_uuid
 from app.core.enum.db_key_prefix_name import DBSaveIdEnum
 from app.schemas.user_db.result_model import (
     BasicResult,
-    SaveProfileResult,
+    UpdateOrSaveProfileResult,
     AllDBProfileResult,
     TableListResult,
     ColumnListResult,
@@ -21,7 +21,7 @@ from app.schemas.user_db.result_model import (
 )
 from app.schemas.user_db.db_profile_model import (
     DBProfileInfo,
-    SaveDBProfile,
+    UpdateOrSaveDBProfile,
     AllDBProfileInfo
 )
 
@@ -46,15 +46,28 @@ class UserDbService:
 
     def save_profile(
         self,
-        save_db_info: SaveDBProfile,
+        save_db_info: UpdateOrSaveDBProfile,
         repository: UserDbRepository = user_db_repository
-    ) -> SaveProfileResult:
+    ) -> UpdateOrSaveProfileResult:
         """
         DB 연결 정보를 저장 후 결과를 반환합니다.
         """
         save_db_info.id = generate_prefixed_uuid(DBSaveIdEnum.user_db.value)
         try:
             return repository.save_profile(save_db_info)
+        except Exception as e:
+            raise APIException(CommonCode.FAIL) from e
+
+    def modify_profile(
+        self,
+        modify_db_info: UpdateOrSaveDBProfile,
+        repository: UserDbRepository = user_db_repository
+    ) -> UpdateOrSaveProfileResult:
+        """
+        DB 연결 정보를 업데이트 후 결과를 반환합니다.
+        """
+        try:
+            return repository.modify_profile(modify_db_info)
         except Exception as e:
             raise APIException(CommonCode.FAIL) from e
 

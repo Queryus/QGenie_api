@@ -9,7 +9,7 @@ from app.core.exceptions import APIException
 from app.schemas.user_db.result_model import (
     DBProfile,
     BasicResult,
-    SaveProfileResult,
+    UpdateOrSaveProfileResult,
     AllDBProfileResult,
     SchemaListResult,
     TableListResult,
@@ -17,7 +17,7 @@ from app.schemas.user_db.result_model import (
     ColumnInfo
 )
 from app.schemas.user_db.db_profile_model import (
-    SaveDBProfile,
+    UpdateOrSaveDBProfile,
     AllDBProfileInfo
 )
 
@@ -57,10 +57,10 @@ class UserDbRepository:
 
     def save_profile(
         self,
-        save_db_info: SaveDBProfile
-    ) -> SaveProfileResult:
+        save_db_info: UpdateOrSaveDBProfile
+    ) -> UpdateOrSaveProfileResult:
         """
-        DB 드라이버와 연결에 필요한 매개변수들을 받아 연결을 테스트합니다.
+        DB 드라이버와 연결에 필요한 매개변수들을 받아 저장합니다.
         """
         db_path = get_db_path()
         connection = None
@@ -83,11 +83,46 @@ class UserDbRepository:
             connection.commit()
             name = save_db_info.view_name if save_db_info.view_name else save_db_info.type
 
-            return SaveProfileResult(is_successful=True, code=CommonCode.SUCCESS_SAVE_DB_PROFILE, view_name=name)
+            return UpdateOrSaveProfileResult(is_successful=True, code=CommonCode.SUCCESS_SAVE_DB_PROFILE, view_name=name)
         except sqlite3.Error:
-            return SaveProfileResult(is_successful=False, code=CommonCode.FAIL_SAVE_PROFILE)
+            return UpdateOrSaveProfileResult(is_successful=False, code=CommonCode.FAIL_SAVE_PROFILE)
         except Exception:
-            return SaveProfileResult(is_successful=False, code=CommonCode.FAIL_SAVE_PROFILE)
+            return UpdateOrSaveProfileResult(is_successful=False, code=CommonCode.FAIL_SAVE_PROFILE)
+        finally:
+            if connection:
+                connection.close()
+
+    def modify_profile(
+            self,
+            modify_db_info: UpdateOrSaveDBProfile
+    ) -> UpdateOrSaveProfileResult:
+        """
+        DB 드라이버와 연결에 필요한 매개변수들을 받아 업데이트합니다.
+        """
+        db_path = get_db_path()
+        connection = None
+        try:
+            connection = sqlite3.connect(db_path)
+            cursor = connection.cursor()
+            profile_dict = modify_db_info.model_dump()
+
+            columns_to_update = {
+                key: value for key, value in profile_dict.items() if value is not None and key != 'id'
+            }
+
+            set_clause = ", ".join([f"{key} = ?" for key in columns_to_update.keys()])
+            sql = f"UPDATE db_profile SET {set_clause} WHERE id = ?"
+            data_to_update = tuple(columns_to_update.values()) + (modify_db_info.id,)
+
+            cursor.execute(sql, data_to_update)
+            connection.commit()
+            name = modify_db_info.view_name if modify_db_info.view_name else modify_db_info.type
+
+            return UpdateOrSaveProfileResult(is_successful=True, code=CommonCode.SUCCESS_UPDATE_DB_PROFILE, view_name=name)
+        except sqlite3.Error:
+            return UpdateOrSaveProfileResult(is_successful=False, code=CommonCode.FAIL_UPDATE_PROFILE)
+        except Exception:
+            return UpdateOrSaveProfileResult(is_successful=False, code=CommonCode.FAIL_UPDATE_PROFILE)
         finally:
             if connection:
                 connection.close()
