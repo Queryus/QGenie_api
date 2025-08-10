@@ -17,7 +17,7 @@ from app.schemas.user_db.result_model import (
     ColumnInfo
 )
 from app.schemas.user_db.db_profile_model import (
-    UpdateOrSaveDBProfile,
+    UpdateOrCreateDBProfile,
     AllDBProfileInfo
 )
 
@@ -55,9 +55,9 @@ class UserDbRepository:
             if connection:
                 connection.close()
 
-    def save_profile(
+    def create_profile(
         self,
-        save_db_info: UpdateOrSaveDBProfile
+        create_db_info: UpdateOrCreateDBProfile
     ) -> ChangeProfileResult:
         """
         DB 드라이버와 연결에 필요한 매개변수들을 받아 저장합니다.
@@ -67,7 +67,7 @@ class UserDbRepository:
         try:
             connection = sqlite3.connect(db_path)
             cursor = connection.cursor()
-            profile_dict = save_db_info.model_dump()
+            profile_dict = create_db_info.model_dump()
 
             columns_to_insert = {
                 key: value for key, value in profile_dict.items() if value is not None
@@ -81,7 +81,7 @@ class UserDbRepository:
 
             cursor.execute(sql, data_to_insert)
             connection.commit()
-            name = save_db_info.view_name if save_db_info.view_name else save_db_info.type
+            name = create_db_info.view_name if create_db_info.view_name else create_db_info.type
 
             return ChangeProfileResult(is_successful=True, code=CommonCode.SUCCESS_SAVE_PROFILE, view_name=name)
         except sqlite3.Error:
@@ -94,7 +94,7 @@ class UserDbRepository:
 
     def update_profile(
             self,
-            update_db_info: UpdateOrSaveDBProfile
+            update_db_info: UpdateOrCreateDBProfile
     ) -> ChangeProfileResult:
         """
         DB 드라이버와 연결에 필요한 매개변수들을 받아 업데이트합니다.

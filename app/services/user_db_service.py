@@ -21,7 +21,7 @@ from app.schemas.user_db.result_model import (
 )
 from app.schemas.user_db.db_profile_model import (
     DBProfileInfo,
-    UpdateOrSaveDBProfile,
+    UpdateOrCreateDBProfile,
     AllDBProfileInfo
 )
 
@@ -44,23 +44,23 @@ class UserDbService:
         except Exception as e:
             raise APIException(CommonCode.FAIL) from e
 
-    def save_profile(
+    def create_profile(
         self,
-        save_db_info: UpdateOrSaveDBProfile,
+        create_db_info: UpdateOrCreateDBProfile,
         repository: UserDbRepository = user_db_repository
     ) -> ChangeProfileResult:
         """
         DB 연결 정보를 저장 후 결과를 반환합니다.
         """
-        save_db_info.id = generate_prefixed_uuid(DBSaveIdEnum.user_db.value)
+        create_db_info.id = generate_prefixed_uuid(DBSaveIdEnum.user_db.value)
         try:
-            return repository.save_profile(save_db_info)
+            return repository.create_profile(create_db_info)
         except Exception as e:
             raise APIException(CommonCode.FAIL) from e
 
     def update_profile(
         self,
-        update_db_info: UpdateOrSaveDBProfile,
+        update_db_info: UpdateOrCreateDBProfile,
         repository: UserDbRepository = user_db_repository
     ) -> ChangeProfileResult:
         """
