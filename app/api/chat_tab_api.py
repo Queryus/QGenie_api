@@ -59,3 +59,19 @@ def updated_chat_tab(
     )
 
     return ResponseMessage.success(value=response_data, code=CommonCode.SUCCESS_CHAT_TAB_UPDATE)
+
+@router.delete(
+    "/remove/{tabId}",
+    response_model=ResponseMessage,
+    summary="특정 Chat Tab 삭제",
+)
+def delete_chat_tab(
+    tabId: str = Path(..., description="수정할 채팅 탭의 고유 ID"), 
+    service: ChatTabService = chat_tab_service_dependency
+) -> ResponseMessage:
+    """
+    채팅 탭 ID를 기준으로 채팅 탭을 삭제합니다.
+    - **id**: 삭제할 채팅 탭 ID
+    """
+    service.delete_chat_tab(tabId)
+    return ResponseMessage.success(code=CommonCode.SUCCESS_CHAT_TAB_DELETE)
