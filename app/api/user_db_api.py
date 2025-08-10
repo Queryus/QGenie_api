@@ -7,7 +7,7 @@ from app.core.exceptions import APIException
 from app.core.response import ResponseMessage
 from app.schemas.user_db.db_profile_model import DBProfileInfo, SaveDBProfile
 from app.services.user_db_service import UserDbService, user_db_service
-from app.schemas.user_db.result_model import DBProfile
+from app.schemas.user_db.result_model import DBProfile, TableInfo, ColumnInfo, SchemaListResult, TableListResult, ColumnListResult
 
 user_db_service_dependency = Depends(lambda: user_db_service)
 
@@ -39,6 +39,7 @@ def save_profile(
     save_db_info: SaveDBProfile,
     service: UserDbService = user_db_service_dependency,
 ) -> ResponseMessage[str]:
+
     save_db_info.validate_required_fields()
     result = service.save_profile(save_db_info)
 
@@ -54,8 +55,63 @@ def save_profile(
 def find_all_profile(
     service: UserDbService = user_db_service_dependency,
 ) -> ResponseMessage[List[DBProfile]]:
+
     result = service.find_all_profile()
 
     if not result.is_successful:
         raise APIException(result.code)
     return ResponseMessage.success(value=result.profiles, code=result.code)
+
+@router.get(
+    "/find/schemas/{profile_id}",
+    response_model=ResponseMessage[List[str]],
+    summary="특정 DB의 전체 스키마 조회",
+)
+def find_schemas(
+    profile_id: str,
+    service: UserDbService = user_db_service_dependency
+) -> ResponseMessage[List[str]]:
+
+    db_info = service.find_profile(profile_id)
+    result = service.find_schemas(db_info)
+
+    if not result.is_successful:
+        raise APIException(result.code)
+    return ResponseMessage.success(value=result.schemas, code=result.code)
+
+@router.get(
+    "/find/tables/{profile_id}/{schema_name}",
+    response_model=ResponseMessage[List[str]],
+    summary="특정 스키마의 전체 테이블 조회",
+)
+def find_tables(
+    profile_id: str,
+    schema_name: str,
+    service: UserDbService = user_db_service_dependency
+) -> ResponseMessage[List[str]]:
+
+    db_info = service.find_profile(profile_id)
+    result = service.find_tables(db_info, schema_name)
+
+    if not result.is_successful:
+        raise APIException(result.code)
+    return ResponseMessage.success(value=result.tables, code=result.code)
+
+@router.get(
+    "/find/columns/{profile_id}/{schema_name}/{table_name}",
+    response_model=ResponseMessage[List[ColumnInfo]],
+    summary="특정 테이블의 전체 컬럼 조회",
+)
+def find_columns(
+    profile_id: str,
+    schema_name: str,
+    table_name: str,
+    service: UserDbService = user_db_service_dependency
+) -> ResponseMessage[List[ColumnInfo]]:
+
+    db_info = service.find_profile(profile_id)
+    result = service.find_columns(db_info, schema_name, table_name)
+
+    if not result.is_successful:
+        raise APIException(result.code)
+    return ResponseMessage.success(value=result.columns, code=result.code)
