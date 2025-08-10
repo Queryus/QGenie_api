@@ -7,7 +7,7 @@ from app.core.exceptions import APIException
 from app.core.response import ResponseMessage
 from app.schemas.user_db.db_profile_model import DBProfileInfo, UpdateOrSaveDBProfile
 from app.services.user_db_service import UserDbService, user_db_service
-from app.schemas.user_db.result_model import DBProfile, TableInfo, ColumnInfo, SchemaListResult, TableListResult, ColumnListResult
+from app.schemas.user_db.result_model import DBProfile, ColumnInfo
 
 user_db_service_dependency = Depends(lambda: user_db_service)
 
@@ -23,6 +23,7 @@ def connection_test(
     db_info: DBProfileInfo,
     service: UserDbService = user_db_service_dependency,
 ) -> ResponseMessage[bool]:
+
     db_info.validate_required_fields()
     result = service.connection_test(db_info)
 
@@ -52,13 +53,13 @@ def save_profile(
     response_model=ResponseMessage[str],
     summary="DB 프로필 업데이트",
 )
-def modify_profile(
-    modify_db_info: UpdateOrSaveDBProfile,
+def update_profile(
+    update_db_info: UpdateOrSaveDBProfile,
     service: UserDbService = user_db_service_dependency,
 ) -> ResponseMessage[str]:
 
-    modify_db_info.validate_required_fields()
-    result = service.modify_profile(modify_db_info)
+    update_db_info.validate_required_fields()
+    result = service.update_profile(update_db_info)
 
     if not result.is_successful:
         raise APIException(result.code)

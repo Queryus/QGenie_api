@@ -92,9 +92,9 @@ class UserDbRepository:
             if connection:
                 connection.close()
 
-    def modify_profile(
+    def update_profile(
             self,
-            modify_db_info: UpdateOrSaveDBProfile
+            update_db_info: UpdateOrSaveDBProfile
     ) -> ChangeProfileResult:
         """
         DB 드라이버와 연결에 필요한 매개변수들을 받아 업데이트합니다.
@@ -104,7 +104,7 @@ class UserDbRepository:
         try:
             connection = sqlite3.connect(db_path)
             cursor = connection.cursor()
-            profile_dict = modify_db_info.model_dump()
+            profile_dict = update_db_info.model_dump()
 
             columns_to_update = {
                 key: value for key, value in profile_dict.items() if value is not None and key != 'id'
@@ -112,11 +112,11 @@ class UserDbRepository:
 
             set_clause = ", ".join([f"{key} = ?" for key in columns_to_update.keys()])
             sql = f"UPDATE db_profile SET {set_clause} WHERE id = ?"
-            data_to_update = tuple(columns_to_update.values()) + (modify_db_info.id,)
+            data_to_update = tuple(columns_to_update.values()) + (update_db_info.id,)
 
             cursor.execute(sql, data_to_update)
             connection.commit()
-            name = modify_db_info.view_name if modify_db_info.view_name else modify_db_info.type
+            name = update_db_info.view_name if update_db_info.view_name else update_db_info.type
 
             return ChangeProfileResult(is_successful=True, code=CommonCode.SUCCESS_UPDATE_PROFILE, view_name=name)
         except sqlite3.Error:

@@ -58,16 +58,16 @@ class UserDbService:
         except Exception as e:
             raise APIException(CommonCode.FAIL) from e
 
-    def modify_profile(
+    def update_profile(
         self,
-        modify_db_info: UpdateOrSaveDBProfile,
+        update_db_info: UpdateOrSaveDBProfile,
         repository: UserDbRepository = user_db_repository
     ) -> ChangeProfileResult:
         """
         DB 연결 정보를 업데이트 후 결과를 반환합니다.
         """
         try:
-            return repository.modify_profile(modify_db_info)
+            return repository.update_profile(update_db_info)
         except Exception as e:
             raise APIException(CommonCode.FAIL) from e
 
