@@ -4,7 +4,7 @@ from app.core.exceptions import APIException
 from app.core.status import CommonCode
 
 
-def validate_chat_name(name: str | None) -> None:
+def validate_chat_tab_name(name: str | None) -> None:
         """채팅 탭 이름에 대한 유효성 검증 로직을 수행합니다."""
         # 1. 문자열 전체가 공백 문자인지 확인
         if name is None or name.isspace():

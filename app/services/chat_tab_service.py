@@ -5,26 +5,26 @@ from fastapi import Depends
 from app.core.exceptions import APIException
 from app.core.status import CommonCode
 from app.core.utils import generate_prefixed_uuid
-from app.repository.chat_tab_repository import AIChatRepository, ai_chat_repository
-from app.schemas.chat_tab.create_model import AIChatCreate
-from app.schemas.chat_tab.db_model import AIChatInDB
-from app.schemas.chat_tab.validation_utils import validate_chat_name
+from app.repository.chat_tab_repository import ChatTabRepository, chat_tab_repository
+from app.schemas.chat_tab.create_model import ChatTabCreate
+from app.schemas.chat_tab.db_model import ChatTabInDB
+from app.schemas.chat_tab.validation_utils import validate_chat_tab_name
 
-ai_chat_repository_dependency = Depends(lambda: ai_chat_repository)
+chat_tab_repository_dependency = Depends(lambda: chat_tab_repository)
 
 
-class AIChatService:
-    def __init__(self, repository: AIChatRepository = ai_chat_repository):
+class ChatTabService:
+    def __init__(self, repository: ChatTabRepository = chat_tab_repository):
         self.repository = repository
 
-    def store_ai_chat(self, chatName: AIChatCreate) -> AIChatInDB:
+    def store_chat_tab(self, chatName: ChatTabCreate) -> ChatTabInDB:
         """새로운 AI 채팅을 데이터베이스에 저장합니다."""
-        validate_chat_name(chatName.name)
+        validate_chat_tab_name(chatName.name)
 
         new_id = generate_prefixed_uuid("CHAT_TAB")
 
         try:
-            created_row = self.repository.create_ai_chat(
+            created_row = self.repository.create_chat_tab(
                 new_id=new_id,
                 name=chatName.name,
             )
@@ -41,4 +41,4 @@ class AIChatService:
             raise APIException(CommonCode.FAIL) from e
 
 
-ai_chat_service = AIChatService()
+chat_tab_service = ChatTabService()
