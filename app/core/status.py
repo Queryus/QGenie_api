@@ -20,6 +20,14 @@ class CommonCode(Enum):
     """ DRIVER, DB 성공 코드 - 21xx """
     SUCCESS_DRIVER_INFO = (status.HTTP_200_OK, "2100", "드라이버 정보 조회를 성공하였습니다.")
     SUCCESS_USER_DB_CONNECT_TEST = (status.HTTP_200_OK, "2101", "테스트 연결을 성공하였습니다.")
+    SUCCESS_FIND_PROFILE = (status.HTTP_200_OK, "2102", "디비 정보 조회를 성공하였습니다.")
+    SUCCESS_FIND_SCHEMAS = (status.HTTP_200_OK, "2103", "디비 스키마 정보 조회를 성공하였습니다.")
+    SUCCESS_FIND_TABLES = (status.HTTP_200_OK, "2104", "디비 테이블 정보 조회를 성공하였습니다.")
+    SUCCESS_FIND_COLUMNS = (status.HTTP_200_OK, "2105", "디비 컬럼 정보 조회를 성공하였습니다.")
+    SUCCESS_SAVE_PROFILE = (status.HTTP_200_OK, "2130", "디비 연결 정보를 저장하였습니다.")
+    SUCCESS_UPDATE_PROFILE = (status.HTTP_200_OK, "2150", "디비 연결 정보를 업데이트 하였습니다.")
+    SUCCESS_DELETE_PROFILE = (status.HTTP_200_OK, "2170", "디비 연결 정보를 삭제 하였습니다.")
+
 
     """ KEY 성공 코드 - 22xx """
 
@@ -31,19 +39,19 @@ class CommonCode(Enum):
     """ SQL 성공 코드 - 25xx """
 
     # =======================================
-    #    클라이언트 오류 (Client Error) - 4xxx
+    #    클라이언트 에러 (Client Error) - 4xxx
     # =======================================
-    """ 기본 클라이언트 오류 코드 - 40xx """
+    """ 기본 클라이언트 에러 코드 - 40xx """
     NO_VALUE = (status.HTTP_400_BAD_REQUEST, "4000", "필수 값이 존재하지 않습니다.")
     DUPLICATION = (status.HTTP_409_CONFLICT, "4001", "이미 존재하는 데이터입니다.")
     NO_SEARCH_DATA = (status.HTTP_404_NOT_FOUND, "4002", "요청한 데이터를 찾을 수 없습니다.")
     INVALID_PARAMETER = (status.HTTP_422_UNPROCESSABLE_ENTITY, "4003", "필수 값이 누락되었습니다.")
 
-    """ DRIVER, DB 클라이언트 오류 코드 - 41xx """
+    """ DRIVER, DB 클라이언트 에러 코드 - 41xx """
     INVALID_DB_DRIVER = (status.HTTP_409_CONFLICT, "4100", "지원하지 않는 데이터베이스입니다.")
     NO_DB_DRIVER = (status.HTTP_400_BAD_REQUEST, "4101", "데이터베이스는 필수 값입니다.")
 
-    """ KEY 클라이언트 오류 코드 - 42xx """
+    """ KEY 클라이언트 에러 코드 - 42xx """
     INVALID_API_KEY_FORMAT = (status.HTTP_400_BAD_REQUEST, "4200", "API 키의 형식이 올바르지 않습니다.")
     INVALID_API_KEY_PREFIX = (
         status.HTTP_400_BAD_REQUEST,
@@ -51,7 +59,7 @@ class CommonCode(Enum):
         "API 키가 선택한 서비스의 올바른 형식이 아닙니다. (예: OpenAI는 sk-로 시작)",
     )
 
-    """ AI CHAT TAB 클라이언트 오류 코드 - 43xx """
+    """ AI CHAT, DB 클라이언트 에러 코드 - 43xx """
     INVALID_CHAT_TAB_NAME_FORMAT = (status.HTTP_400_BAD_REQUEST, "4300", "채팅 탭 이름의 형식이 올바르지 않습니다.")
     INVALID_CHAT_TAB_NAME_LENGTH = (
         status.HTTP_400_BAD_REQUEST,
@@ -65,15 +73,15 @@ class CommonCode(Enum):
         "허용되지 않는 특수 문자: 큰따옴표(\"), 작은따옴표('), 세미콜론(;), 꺾쇠괄호(<, >)",
     )
 
-    """ ANNOTATION 클라이언트 오류 코드 - 44xx """
+    """ ANNOTATION 클라이언트 에러 코드 - 44xx """
 
-    """ SQL 클라이언트 오류 코드 - 45xx """
+    """ SQL 클라이언트 에러 코드 - 45xx """
 
     # ==================================
-    #    서버 오류 (Server Error) - 5xx
+    #    서버 에러 (Server Error) - 5xx
     # ==================================
-    """ 기본 서버 오류 코드 - 50xx """
-    FAIL = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5000", "서버 처리 중 오류가 발생했습니다.")
+    """ 기본 서버 에러 코드 - 50xx """
+    FAIL = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5000", "서버 처리 중 에러가 발생했습니다.")
     DB_BUSY = (
         status.HTTP_503_SERVICE_UNAVAILABLE,
         "5001",
@@ -82,19 +90,26 @@ class CommonCode(Enum):
     FAIL_TO_VERIFY_CREATION = (
         status.HTTP_500_INTERNAL_SERVER_ERROR,
         "5002",
-        "데이터 생성 후 검증 과정에서 오류가 발생했습니다.",
+        "데이터 생성 후 검증 과정에서 에러가 발생했습니다.",
     )
 
-    """ DRIVER, DB 서버 오류 코드 - 51xx """
-    FAIL_CONNECT_DB = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5100", "디비 연결 중 오류가 발생했습니다.")
+    """ DRIVER, DB 서버 에러 코드 - 51xx """
+    FAIL_CONNECT_DB = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5100", "디비 연결 중 에러가 발생했습니다.")
+    FAIL_FIND_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5101", "디비 정보 조회 중 에러가 발생했습니다.")
+    FAIL_FIND_SCHEMAS = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5102", "디비 스키마 정보 조회 중 에러가 발생했습니다.")
+    FAIL_FIND_TABLES = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5103", "디비 테이블 정보 조회 중 에러가 발생했습니다.")
+    FAIL_FIND_COLUMNS = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5104", "디비 컬럼 정보 조회 중 에러가 발생했습니다.")
+    FAIL_SAVE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5130", "디비 정보 저장 중 에러가 발생했습니다.")
+    FAIL_UPDATE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5150", "디비 정보 업데이트 중 에러가 발생했습니다.")
+    FAIL_DELETE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5170", "디비 정보 삭제 중 에러가 발생했습니다.")
 
-    """ KEY 서버 오류 코드 - 52xx """
+    """ KEY 서버 에러 코드 - 52xx """
 
-    """ AI CHAT, DB 서버 오류 코드 - 53xx """
+    """ AI CHAT, DB 서버 에러 코드 - 53xx """
 
-    """ ANNOTATION 서버 오류 코드 - 54xx """
+    """ ANNOTATION 서버 에러 코드 - 54xx """
 
-    """ SQL 서버 오류 코드 - 55xx """
+    """ SQL 서버 에러 코드 - 55xx """
 
     def __init__(self, http_status: int, code: str, message: str):
         """Enum 멤버가 생성될 때 각 값을 속성으로 할당합니다."""
