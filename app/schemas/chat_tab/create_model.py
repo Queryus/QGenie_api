@@ -1,4 +1,3 @@
-
 from app.schemas.chat_tab.base_model import ChatTabBase
 from app.schemas.chat_tab.validation_utils import validate_chat_tab_name
 

@@ -5,7 +5,6 @@ from app.schemas.chat_tab.db_model import ChatMessageInDB
 
 
 class ChatMessageRepository:
-
     def get_chat_messages_by_tabId(self, id: str) -> list[ChatMessageInDB]:
         """주어진 chat_tab_id에 해당하는 모든 메시지를 가져옵니다."""
         db_path = get_db_path()

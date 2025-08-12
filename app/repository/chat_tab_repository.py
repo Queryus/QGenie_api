@@ -5,7 +5,6 @@ from app.schemas.chat_tab.db_model import ChatTabInDB
 
 
 class ChatTabRepository:
-
     def create_chat_tab(self, new_id: str, name: str) -> ChatTabInDB:
         """
         새로운 채팅 탭 이름을 데이터베이스에 저장하고, 저장된 객체를 반환합니다.
