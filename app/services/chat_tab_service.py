@@ -67,4 +67,11 @@ class ChatTabService:
                 raise APIException(CommonCode.DB_BUSY) from e
             raise APIException(CommonCode.FAIL) from e
 
+    def get_all_chat_tab(self) -> list[ChatTabInDB]:
+        """데이터베이스에 저장된 모든 Chat_tab을 조회합니다."""
+        try:
+            return self.repository.get_all_chat_tab()
+        except sqlite3.Error as e:
+            raise APIException(CommonCode.FAIL) from e
+        
 chat_tab_service = ChatTabService()
