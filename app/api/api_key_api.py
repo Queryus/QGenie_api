@@ -63,7 +63,7 @@ def get_all_api_keys(
         )
         for api_key in api_keys_in_db
     ]
-    return ResponseMessage.success(value=response_data)
+    return ResponseMessage.success(value=response_data, code=CommonCode.SUCCESS_GET_API_KEY)
 
 
 @router.get(
@@ -83,7 +83,7 @@ def get_api_key_by_service_name(
         created_at=api_key_in_db.created_at,
         updated_at=api_key_in_db.updated_at,
     )
-    return ResponseMessage.success(value=response_data)
+    return ResponseMessage.success(value=response_data, code=CommonCode.SUCCESS_GET_API_KEY)
 
 
 @router.put(
@@ -110,7 +110,7 @@ def update_api_key(
         updated_at=updated_api_key.updated_at,
     )
 
-    return ResponseMessage.success(value=response_data)
+    return ResponseMessage.success(value=response_data, code=CommonCode.SUCCESS_UPDATE_API_KEY)
 
 
 @router.delete(
@@ -124,4 +124,4 @@ def delete_api_key(serviceName: LLMServiceEnum, service: APIKeyService = api_key
     - **service_name**: 삭제할 서비스의 이름
     """
     service.delete_api_key(serviceName.value)
-    return ResponseMessage.success()
+    return ResponseMessage.success(code=CommonCode.SUCCESS_DELETE_API_KEY)
