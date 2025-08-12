@@ -2,6 +2,7 @@ import sqlite3
 
 from fastapi import Depends
 
+from app.core.enum.db_key_prefix_name import DBSaveIdEnum
 from app.core.exceptions import APIException
 from app.core.security import AES256
 from app.core.status import CommonCode
@@ -23,7 +24,7 @@ class APIKeyService:
         api_key_data.validate_with_service()
         try:
             encrypted_key = AES256.encrypt(api_key_data.api_key)
-            new_id = generate_prefixed_uuid("APIKEY")
+            new_id = generate_prefixed_uuid(DBSaveIdEnum.api_key.value)
 
             created_row = self.repository.create_api_key(
                 new_id=new_id,
