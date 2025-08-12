@@ -10,6 +10,7 @@ from app.schemas.chat_tab.create_model import ChatTabCreate
 from app.schemas.chat_tab.db_model import ChatTabInDB
 from app.schemas.chat_tab.update_model import ChatTabUpdate
 from app.schemas.chat_tab.validation_utils import validate_chat_tab_name
+from app.core.enum.db_key_prefix_name import DBSaveIdEnum
 
 chat_tab_repository_dependency = Depends(lambda: chat_tab_repository)
 
@@ -22,7 +23,7 @@ class ChatTabService:
         """새로운 AI 채팅을 데이터베이스에 저장합니다."""
         validate_chat_tab_name(chatName.name)
 
-        new_id = generate_prefixed_uuid("CHAT_TAB")
+        new_id = generate_prefixed_uuid(DBSaveIdEnum.chat_tab.value)
 
         try:
             created_row = self.repository.create_chat_tab(
