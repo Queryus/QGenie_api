@@ -75,3 +75,28 @@ def delete_chat_tab(
     """
     service.delete_chat_tab(tabId)
     return ResponseMessage.success(code=CommonCode.SUCCESS_CHAT_TAB_DELETE)
+
+@router.get(
+    "/result",
+    response_model=ResponseMessage[list[ChatTabResponse]],
+    summary="저장된 모든 Chat_tab 정보 조회",
+    description="""
+    chat_tab 테이블에 저장된 모든 chat tab들을 확인합니다.
+    """,
+)
+def get_all_chat_tab(
+    service: ChatTabService = chat_tab_service_dependency,
+) -> ResponseMessage[list[ChatTabResponse]]:
+    """저장된 모든 chat_tab의 메타데이터를 조회하여 등록 여부를 확인합니다."""
+    chat_tabs_in_db = service.get_all_chat_tab()
+
+    response_data = [
+        ChatTabResponse(
+            id=chat_tab.id,
+            name=chat_tab.name,
+            created_at=chat_tab.created_at,
+            updated_at=chat_tab.updated_at,
+        )
+        for chat_tab in chat_tabs_in_db
+    ]
+    return ResponseMessage.success(value=response_data, code=CommonCode.SUCCESS_GET_CHAT_TAB)

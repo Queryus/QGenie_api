@@ -10,6 +10,7 @@ from app.schemas.chat_tab.create_model import ChatTabCreate
 from app.schemas.chat_tab.db_model import ChatTabInDB
 from app.schemas.chat_tab.update_model import ChatTabUpdate
 from app.schemas.chat_tab.validation_utils import validate_chat_tab_name
+from app.core.enum.db_key_prefix_name import DBSaveIdEnum
 
 chat_tab_repository_dependency = Depends(lambda: chat_tab_repository)
 
@@ -22,7 +23,7 @@ class ChatTabService:
         """새로운 AI 채팅을 데이터베이스에 저장합니다."""
         validate_chat_tab_name(chatName.name)
 
-        new_id = generate_prefixed_uuid("CHAT_TAB")
+        new_id = generate_prefixed_uuid(DBSaveIdEnum.chat_tab.value)
 
         try:
             created_row = self.repository.create_chat_tab(
@@ -66,4 +67,11 @@ class ChatTabService:
                 raise APIException(CommonCode.DB_BUSY) from e
             raise APIException(CommonCode.FAIL) from e
 
+    def get_all_chat_tab(self) -> list[ChatTabInDB]:
+        """데이터베이스에 저장된 모든 Chat_tab을 조회합니다."""
+        try:
+            return self.repository.get_all_chat_tab()
+        except sqlite3.Error as e:
+            raise APIException(CommonCode.FAIL) from e
+        
 chat_tab_service = ChatTabService()

@@ -35,7 +35,10 @@ class CommonCode(Enum):
     SUCCESS_GET_API_KEY = (status.HTTP_200_OK, "2202", "API KEY 정보를 성공적으로 조회했습니다.")
 
     """ AI CHAT, DB 성공 코드 - 23xx """
-    SUCCESS_AI_CHAT_CREATE = (status.HTTP_200_OK, "2300", "새로운 채팅 탭을 생성하였습니다.")
+    SUCCESS_CHAT_TAB_CREATE = (status.HTTP_200_OK, "2300", "새로운 채팅 탭이 성공적으로 생성하였습니다.")
+    SUCCESS_CHAT_TAB_UPDATE = (status.HTTP_200_OK, "2301", "채팅 탭 이름이 성공적으로 수정되었습니다.")
+    SUCCESS_CHAT_TAB_DELETE = (status.HTTP_200_OK, "2302", "채팅 탭을 성공적으로 삭제되었습니다.")
+    SUCCESS_GET_CHAT_TAB = (status.HTTP_200_OK, "2303", "모든 채팅 탭을 성공적으로 조회하였습니다.")
 
     """ ANNOTATION 성공 코드 - 24xx """
 

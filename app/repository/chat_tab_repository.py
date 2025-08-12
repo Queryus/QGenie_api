@@ -98,6 +98,21 @@ class ChatTabRepository:
         finally:
             if conn:
                 conn.close()
+    def get_all_chat_tab(self) -> list[ChatTabInDB]:
+        """데이터베이스에 저장된 모든 API Key를 조회합니다."""
+        db_path = get_db_path()
+        conn = None
+        try:
+            conn = sqlite3.connect(str(db_path), timeout=10)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
 
+            cursor.execute("SELECT * FROM chat_tab")
+            rows = cursor.fetchall()
+
+            return [ChatTabInDB.model_validate(dict(row)) for row in rows]
+        finally:
+            if conn:
+                conn.close()
 
 chat_tab_repository = ChatTabRepository()
