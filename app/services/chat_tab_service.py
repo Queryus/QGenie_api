@@ -5,25 +5,27 @@ from fastapi import Depends
 from app.core.exceptions import APIException
 from app.core.status import CommonCode
 from app.core.utils import generate_prefixed_uuid
-from app.repository.chat_tab_repository import AIChatRepository, ai_chat_repository
-from app.schemas.chat_tab.create_model import AIChatCreate
-from app.schemas.chat_tab.db_model import AIChatInDB
+from app.repository.chat_tab_repository import ChatTabRepository, chat_tab_repository
+from app.schemas.chat_tab.create_model import ChatTabCreate
+from app.schemas.chat_tab.db_model import ChatTabInDB
+from app.schemas.chat_tab.update_model import ChatTabUpdate
+from app.schemas.chat_tab.validation_utils import validate_chat_tab_name
 
-ai_chat_repository_dependency = Depends(lambda: ai_chat_repository)
+chat_tab_repository_dependency = Depends(lambda: chat_tab_repository)
 
 
-class AIChatService:
-    def __init__(self, repository: AIChatRepository = ai_chat_repository):
+class ChatTabService:
+    def __init__(self, repository: ChatTabRepository = chat_tab_repository):
         self.repository = repository
 
-    def store_ai_chat(self, chatName: AIChatCreate) -> AIChatInDB:
+    def store_chat_tab(self, chatName: ChatTabCreate) -> ChatTabInDB:
         """새로운 AI 채팅을 데이터베이스에 저장합니다."""
-        chatName.validate_with_name()
+        validate_chat_tab_name(chatName.name)
 
         new_id = generate_prefixed_uuid("CHAT_TAB")
 
         try:
-            created_row = self.repository.create_ai_chat(
+            created_row = self.repository.create_chat_tab(
                 new_id=new_id,
                 name=chatName.name,
             )
@@ -38,6 +40,20 @@ class AIChatService:
                 raise APIException(CommonCode.DB_BUSY) from e
             # 기타 모든 sqlite3 오류
             raise APIException(CommonCode.FAIL) from e
+    def updated_chat_tab(self, chatID: str, chatName: ChatTabUpdate) -> ChatTabInDB:
+        """서비스 이름에 해당하는 API Key를 수정합니다."""
+        validate_chat_tab_name(chatName.name)
+        try:
+            updated_chat_tab = self.repository.updated_chat_tab(chatID, chatName.name)
+
+            if not updated_chat_tab:
+                raise APIException(CommonCode.NO_SEARCH_DATA)
+
+            return updated_chat_tab
+        except sqlite3.Error as e:
+            if "database is locked" in str(e):
+                raise APIException(CommonCode.DB_BUSY) from e
+            raise APIException(CommonCode.FAIL) from e
 
 
-ai_chat_service = AIChatService()
+chat_tab_service = ChatTabService()

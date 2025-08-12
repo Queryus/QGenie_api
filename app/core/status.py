@@ -35,7 +35,8 @@ class CommonCode(Enum):
     SUCCESS_GET_API_KEY = (status.HTTP_200_OK, "2202", "API KEY 정보를 성공적으로 조회했습니다.")
 
     """ AI CHAT, DB 성공 코드 - 23xx """
-    SUCCESS_AI_CHAT_CREATE = (status.HTTP_200_OK, "2300", "새로운 채팅 탭을 생성하였습니다.")
+    SUCCESS_CHAT_TAB_CREATE = (status.HTTP_200_OK, "2300", "새로운 채팅 탭을 성공적으로 생성되었습니다.")
+    SUCCESS_CHAT_TAB_UPDATE = (status.HTTP_200_OK, "2301", "채팅 탭 이름 수정이 성공적으로 처리되었습니다.")
 
     """ ANNOTATION 성공 코드 - 24xx """
 
@@ -62,8 +63,9 @@ class CommonCode(Enum):
         "API 키가 선택한 서비스의 올바른 형식이 아닙니다. (예: OpenAI는 sk-로 시작)",
     )
 
-    """ AI CHAT, DB 클라이언트 에러 코드 - 43xx """
-    INVALID_CHAT_TAB_NAME_FORMAT = (status.HTTP_400_BAD_REQUEST, "4300", "채팅 탭 이름의 형식이 올바르지 않습니다.")
+    """ AI CHAT TAB 클라이언트 오류 코드 - 43xx """
+    INVALID_CHAT_TAB_NAME_FORMAT = (status.HTTP_400_BAD_REQUEST, "4300", "채팅 탭 이름은 공백 또는 빈 값일 수 없습니다.")
+
     INVALID_CHAT_TAB_NAME_LENGTH = (
         status.HTTP_400_BAD_REQUEST,
         "4301",

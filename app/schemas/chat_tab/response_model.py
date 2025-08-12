@@ -2,10 +2,10 @@ from datetime import datetime
 
 from pydantic import Field
 
-from app.schemas.chat_tab.base_model import AIChatBase
+from app.schemas.chat_tab.base_model import ChatTabBase
 
 
-class AIChatResponse(AIChatBase):
+class ChatTabResponse(ChatTabBase):
     """AI 채팅 탭 정보 API 응답용 스키마"""
 
     id: str = Field(..., description="채팅 세션의 고유 ID (서버에서 생성)")
