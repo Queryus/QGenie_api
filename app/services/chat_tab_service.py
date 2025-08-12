@@ -41,7 +41,7 @@ class ChatTabService:
             # 기타 모든 sqlite3 오류
             raise APIException(CommonCode.FAIL) from e
     def updated_chat_tab(self, chatID: str, chatName: ChatTabUpdate) -> ChatTabInDB:
-        """서비스 이름에 해당하는 API Key를 수정합니다."""
+        """TabID에 해당하는 AIChatTab name을 수정합니다."""
         validate_chat_tab_name(chatName.name)
         try:
             updated_chat_tab = self.repository.updated_chat_tab(chatID, chatName.name)
@@ -55,5 +55,15 @@ class ChatTabService:
                 raise APIException(CommonCode.DB_BUSY) from e
             raise APIException(CommonCode.FAIL) from e
 
+    def delete_chat_tab(self, tabId: str) -> None:
+        """TabID에 해당하는 AIChatTab을 삭제합니다."""
+        try:
+            is_deleted = self.repository.delete_chat_tab(tabId)
+            if not is_deleted:
+                raise APIException(CommonCode.NO_SEARCH_DATA)
+        except sqlite3.Error as e:
+            if "database is locked" in str(e):
+                raise APIException(CommonCode.DB_BUSY) from e
+            raise APIException(CommonCode.FAIL) from e
 
 chat_tab_service = ChatTabService()

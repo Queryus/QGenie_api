@@ -73,5 +73,31 @@ class ChatTabRepository:
             if conn:
                 conn.close()
 
+    def delete_chat_tab(self, id: str) -> bool:
+        """채팅 탭ID에 해당하는 ChatTab을 삭제하고, 성공 여부를 반환합니다."""
+        db_path = get_db_path()
+        conn = None
+        try:
+            conn = sqlite3.connect(str(db_path), timeout=10)
+            cursor = conn.cursor()
+
+            # 먼저 해당 서비스의 데이터가 존재하는지 확인
+            cursor.execute("SELECT id FROM chat_tab WHERE id = ?", (id,))
+            if not cursor.fetchone():
+                return False
+
+            # 데이터 삭제
+            cursor.execute("DELETE FROM chat_tab WHERE id = ?", (id,))
+            conn.commit()
+
+            # rowcount가 0이면 삭제된 행이 없음 (정상적인 경우 발생하기 어려움)
+            if cursor.rowcount == 0:
+                return False
+
+            return cursor.rowcount > 0
+        finally:
+            if conn:
+                conn.close()
+
 
 chat_tab_repository = ChatTabRepository()
