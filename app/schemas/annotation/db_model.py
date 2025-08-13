@@ -1,5 +1,6 @@
 from pydantic import Field
 
+from app.core.enum.constraint_type import ConstraintTypeEnum
 from app.schemas.annotation.base_model import AnnotationBase
 
 
@@ -36,7 +37,7 @@ class TableRelationshipInDB(AnnotationBase):
 
 class TableConstraintInDB(AnnotationBase):
     table_annotation_id: str
-    constraint_type: str
+    constraint_type: ConstraintTypeEnum
     name: str | None = None
     expression: str | None = None
     ref_table: str | None = None

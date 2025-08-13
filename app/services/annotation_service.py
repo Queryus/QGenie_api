@@ -4,6 +4,7 @@ from datetime import datetime
 import httpx
 from fastapi import Depends
 
+from app.core.enum.constraint_type import ConstraintTypeEnum
 from app.core.enum.db_key_prefix_name import DBSaveIdEnum
 from app.core.exceptions import APIException
 from app.core.status import CommonCode
@@ -119,7 +120,7 @@ class AnnotationService:
                             id=const_id,
                             table_annotation_id=table_id,
                             name=const_data["name"],
-                            constraint_type=const_data["type"],
+                            constraint_type=ConstraintTypeEnum(const_data["type"]),
                             created_at=now,
                             updated_at=now,
                         )
