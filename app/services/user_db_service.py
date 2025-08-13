@@ -19,6 +19,7 @@ from app.schemas.user_db.result_model import (
     ChangeProfileResult,
     ColumnListResult,
     SchemaInfoResult,
+    TableInfo,
     TableListResult,
 )
 
@@ -147,6 +148,73 @@ class UserDbService:
                 driver_module, column_query, schema_name, db_type, table_name, **connect_kwargs
             )
         except Exception as e:
+            raise APIException(CommonCode.FAIL) from e
+
+    def get_full_schema_info(
+        self, db_info: AllDBProfileInfo, repository: UserDbRepository = user_db_repository
+    ) -> SchemaInfoResult:
+        """
+        DB 프로필 정보를 받아 해당 데이터베이스의 전체 스키마 정보
+        (테이블, 컬럼, 제약조건, 인덱스)를 조회하여 반환합니다.
+        """
+        try:
+            driver_module = self._get_driver_module(db_info.type)
+            connect_kwargs = self._prepare_connection_args(db_info)
+
+            # 1. 모든 스키마(DB) 목록 조회
+            schemas_result = repository.find_schemas(
+                driver_module, self._get_schema_query(db_info.type), **connect_kwargs
+            )
+            if not schemas_result.is_successful:
+                raise APIException(schemas_result.code)
+
+            full_schema_info = []
+
+            # 2. 각 스키마의 모든 테이블 목록 조회
+            for schema_name in schemas_result.schemas:
+                tables_result = repository.find_tables(
+                    driver_module, self._get_table_query(db_info.type), schema_name, **connect_kwargs
+                )
+                if not tables_result.is_successful:
+                    # 특정 스키마에서 테이블 조회 실패 시 건너뛰거나 로깅
+                    continue
+
+                # 3. 각 테이블의 상세 정보 조회
+                for table_name in tables_result.tables:
+                    columns_result = repository.find_columns(
+                        driver_module,
+                        self._get_column_query(db_info.type),
+                        schema_name,
+                        db_info.type,
+                        table_name,
+                        **connect_kwargs,
+                    )
+
+                    try:
+                        constraints = repository.find_constraints(
+                            driver_module, db_info.type, table_name, **connect_kwargs
+                        )
+                        indexes = repository.find_indexes(driver_module, db_info.type, table_name, **connect_kwargs)
+                    except sqlite3.Error as e:
+                        # 레포지토리에서 발생한 DB 예외를 서비스에서 처리
+                        raise APIException(CommonCode.FAIL_FIND_CONSTRAINTS_OR_INDEXES) from e
+
+                    table_info = TableInfo(
+                        name=table_name,
+                        columns=columns_result.columns if columns_result.is_successful else [],
+                        constraints=constraints,
+                        indexes=indexes,
+                        comment=None,  # 테이블 코멘트는 현재 조회 로직에 없음
+                    )
+                    full_schema_info.append(table_info)
+
+            return full_schema_info
+
+        except APIException:
+            # 이미 APIException인 경우 그대로 전달
+            raise
+        except Exception as e:
+            # 그 외 모든 예외는 일반 실패로 처리
             raise APIException(CommonCode.FAIL) from e
 
     def _get_driver_module(self, db_type: str):

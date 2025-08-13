@@ -5,8 +5,9 @@ from fastapi import APIRouter, Depends
 
 from app.core.exceptions import APIException
 from app.core.response import ResponseMessage
+from app.core.status import CommonCode
 from app.schemas.user_db.db_profile_model import DBProfileInfo, UpdateOrCreateDBProfile
-from app.schemas.user_db.result_model import ColumnInfo, DBProfile
+from app.schemas.user_db.result_model import ColumnInfo, DBProfile, TableInfo
 from app.services.user_db_service import UserDbService, user_db_service
 
 user_db_service_dependency = Depends(lambda: user_db_service)
@@ -89,6 +90,7 @@ def delete_profile(
 def find_all_profile(
     service: UserDbService = user_db_service_dependency,
 ) -> ResponseMessage[list[DBProfile]]:
+
     result = service.find_all_profile()
 
     if not result.is_successful:
@@ -102,6 +104,7 @@ def find_all_profile(
     summary="특정 DB의 전체 스키마 조회",
 )
 def find_schemas(profile_id: str, service: UserDbService = user_db_service_dependency) -> ResponseMessage[list[str]]:
+
     db_info = service.find_profile(profile_id)
     result = service.find_schemas(db_info)
 
@@ -118,6 +121,7 @@ def find_schemas(profile_id: str, service: UserDbService = user_db_service_depen
 def find_tables(
     profile_id: str, schema_name: str, service: UserDbService = user_db_service_dependency
 ) -> ResponseMessage[list[str]]:
+
     db_info = service.find_profile(profile_id)
     result = service.find_tables(db_info, schema_name)
 
@@ -134,9 +138,26 @@ def find_tables(
 def find_columns(
     profile_id: str, schema_name: str, table_name: str, service: UserDbService = user_db_service_dependency
 ) -> ResponseMessage[list[ColumnInfo]]:
+
     db_info = service.find_profile(profile_id)
     result = service.find_columns(db_info, schema_name, table_name)
 
     if not result.is_successful:
         raise APIException(result.code)
     return ResponseMessage.success(value=result.columns, code=result.code)
+
+
+@router.get(
+    "/find/all-schemas/{profile_id}",
+    response_model=ResponseMessage[list[TableInfo]],
+    summary="특정 DB의 전체 스키마의 상세 정보 조회",
+    description="테이블, 컬럼, 제약조건, 인덱스를 포함한 모든 스키마 정보를 반환합니다.",
+)
+def find_all_schema_info(
+    profile_id: str, service: UserDbService = user_db_service_dependency
+) -> ResponseMessage[list[TableInfo]]:
+
+    db_info = service.find_profile(profile_id)
+    full_schema_info = service.get_full_schema_info(db_info)
+
+    return ResponseMessage.success(value=full_schema_info, code=CommonCode.SUCCESS)

@@ -13,7 +13,9 @@ from app.schemas.user_db.result_model import (
     ChangeProfileResult,
     ColumnInfo,
     ColumnListResult,
+    ConstraintInfo,
     DBProfile,
+    IndexInfo,
     SchemaListResult,
     TableListResult,
 )
@@ -255,6 +257,94 @@ class UserDbRepository:
             return ColumnListResult(is_successful=True, code=CommonCode.SUCCESS_FIND_COLUMNS, columns=columns)
         except Exception:
             return ColumnListResult(is_successful=False, code=CommonCode.FAIL_FIND_COLUMNS, columns=[])
+        finally:
+            if connection:
+                connection.close()
+
+    def find_constraints(
+        self, driver_module: Any, db_type: str, table_name: str, **kwargs: Any
+    ) -> list[ConstraintInfo]:
+        """
+        테이블의 제약 조건 정보를 조회합니다.
+        - 현재는 SQLite만 지원합니다.
+        - 실패 시 DB 드라이버의 예외를 직접 발생시킵니다.
+        """
+        connection = None
+        try:
+            connection = self._connect(driver_module, **kwargs)
+            cursor = connection.cursor()
+            constraints = []
+
+            if db_type == "sqlite":
+                # Foreign Key 제약 조건 조회
+                fk_list_sql = f"PRAGMA foreign_key_list('{table_name}')"
+                cursor.execute(fk_list_sql)
+                fks = cursor.fetchall()
+
+                # Foreign Key 정보를 그룹화
+                fk_groups = {}
+                for fk in fks:
+                    fk_id = fk[0]
+                    if fk_id not in fk_groups:
+                        fk_groups[fk_id] = {"referenced_table": fk[2], "columns": [], "referenced_columns": []}
+                    fk_groups[fk_id]["columns"].append(fk[3])
+                    fk_groups[fk_id]["referenced_columns"].append(fk[4])
+
+                for _, group in fk_groups.items():
+                    constraints.append(
+                        ConstraintInfo(
+                            name=f"fk_{table_name}_{'_'.join(group['columns'])}",
+                            type="FOREIGN KEY",
+                            columns=group["columns"],
+                            referenced_table=group["referenced_table"],
+                            referenced_columns=group["referenced_columns"],
+                        )
+                    )
+
+            # 다른 DB 타입에 대한 제약 조건 조회 로직 추가 가능
+            # elif db_type == "postgresql": ...
+
+            return constraints
+        finally:
+            if connection:
+                connection.close()
+
+    def find_indexes(self, driver_module: Any, db_type: str, table_name: str, **kwargs: Any) -> list[IndexInfo]:
+        """
+        테이블의 인덱스 정보를 조회합니다.
+        - 현재는 SQLite만 지원합니다.
+        - 실패 시 DB 드라이버의 예외를 직접 발생시킵니다.
+        """
+        connection = None
+        try:
+            connection = self._connect(driver_module, **kwargs)
+            cursor = connection.cursor()
+            indexes = []
+
+            if db_type == "sqlite":
+                index_list_sql = f"PRAGMA index_list('{table_name}')"
+                cursor.execute(index_list_sql)
+                raw_indexes = cursor.fetchall()
+
+                for idx in raw_indexes:
+                    index_name = idx[1]
+                    is_unique = idx[2] == 1
+
+                    # "sqlite_autoindex_"로 시작하는 인덱스는 PK에 의해 자동 생성된 것이므로 제외
+                    if index_name.startswith("sqlite_autoindex_"):
+                        continue
+
+                    index_info_sql = f"PRAGMA index_info('{index_name}')"
+                    cursor.execute(index_info_sql)
+                    index_columns = [row[2] for row in cursor.fetchall()]
+
+                    if index_columns:
+                        indexes.append(IndexInfo(name=index_name, columns=index_columns, is_unique=is_unique))
+
+            # 다른 DB 타입에 대한 인덱스 조회 로직 추가 가능
+            # elif db_type == "postgresql": ...
+
+            return indexes
         finally:
             if connection:
                 connection.close()

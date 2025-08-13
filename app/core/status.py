@@ -107,6 +107,11 @@ class CommonCode(Enum):
     FAIL_FIND_SCHEMAS = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5102", "디비 스키마 정보 조회 중 에러가 발생했습니다.")
     FAIL_FIND_TABLES = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5103", "디비 테이블 정보 조회 중 에러가 발생했습니다.")
     FAIL_FIND_COLUMNS = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5104", "디비 컬럼 정보 조회 중 에러가 발생했습니다.")
+    FAIL_FIND_CONSTRAINTS_OR_INDEXES = (
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "5105",
+        "디비 제약조건 또는 인덱스 정보 조회 중 에러가 발생했습니다.",
+    )
     FAIL_SAVE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5130", "디비 정보 저장 중 에러가 발생했습니다.")
     FAIL_UPDATE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5150", "디비 정보 업데이트 중 에러가 발생했습니다.")
     FAIL_DELETE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5170", "디비 정보 삭제 중 에러가 발생했습니다.")
