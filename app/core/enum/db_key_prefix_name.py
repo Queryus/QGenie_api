@@ -8,4 +8,8 @@ class DBSaveIdEnum(Enum):
     user_db = "USER-DB"
     driver = "DRIVER"
     api_key = "API-KEY"
-    chat_tab = "CHAT-TAB"
+    chat_tab = "CHAT_TAB"
+
+    database_annotation = "DB-ANNO"
+    table_annotation = "TBL-ANNO"
+    column_annotation = "COL-ANNO"
