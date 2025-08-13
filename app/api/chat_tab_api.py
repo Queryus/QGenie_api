@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Path
 
 from app.core.response import ResponseMessage
 from app.core.status import CommonCode
-from app.schemas.chat_tab.create_model import ChatTabCreate
+from app.schemas.chat_tab.base_model import ChatTabBase
 from app.schemas.chat_tab.response_model import ChatMessagesResponse, ChatTabResponse
 from app.schemas.chat_tab.update_model import ChatTabUpdate
 from app.services.chat_tab_service import ChatTabService, chat_tab_service
@@ -19,7 +19,7 @@ router = APIRouter()
     description="새로운 Chat Tab을 생성하여 로컬 데이터베이스에 저장합니다.",
 )
 def store_chat_tab(
-    chatName: ChatTabCreate, service: ChatTabService = chat_tab_service_dependency
+    chatName: ChatTabBase, service: ChatTabService = chat_tab_service_dependency
 ) -> ResponseMessage[ChatTabResponse]:
     """
     - **name**: 새로운 Chat_tab 이름 (예: "채팅 타이틀")

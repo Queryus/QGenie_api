@@ -8,10 +8,10 @@ from app.core.status import CommonCode
 from app.core.utils import generate_prefixed_uuid
 from app.repository.chat_message_repository import ChatMessageRepository, chat_message_repository
 from app.repository.chat_tab_repository import ChatTabRepository, chat_tab_repository
-from app.schemas.chat_tab.create_model import ChatTabCreate
+from app.schemas.chat_tab.base_model import ChatTabBase
 from app.schemas.chat_tab.db_model import ChatMessageInDB, ChatTabInDB
 from app.schemas.chat_tab.update_model import ChatTabUpdate
-from app.schemas.chat_tab.validation_utils import validate_chat_tab_id, validate_chat_tab_name
+from app.schemas.chat_tab.validation_utils import validate_chat_tab_id  # 삭제 예정
 
 chat_tab_repository_dependency = Depends(lambda: chat_tab_repository)
 chat_tab_repository_dependency = Depends(lambda: chat_tab_repository)
@@ -26,9 +26,9 @@ class ChatTabService:
         self.tab_repository = tab_repository
         self.message_repository = message_repository
 
-    def store_chat_tab(self, chatName: ChatTabCreate) -> ChatTabInDB:
+    def store_chat_tab(self, chatName: ChatTabBase) -> ChatTabInDB:
         """새로운 AI 채팅을 데이터베이스에 저장합니다."""
-        validate_chat_tab_name(chatName.name)
+        chatName.validate_chat_tab_name()
 
         new_id = generate_prefixed_uuid(DBSaveIdEnum.chat_tab.value)
 
@@ -51,7 +51,7 @@ class ChatTabService:
 
     def updated_chat_tab(self, chatID: str, chatName: ChatTabUpdate) -> ChatTabInDB:
         """TabID에 해당하는 AIChatTab name을 수정합니다."""
-        validate_chat_tab_name(chatName.name)
+        chatName.validate_chat_tab_name()
         try:
             updated_chat_tab = self.tab_repository.updated_chat_tab(chatID, chatName.name)
 
@@ -84,6 +84,7 @@ class ChatTabService:
 
     def get_chat_tab_by_tabId(self, tabId: str) -> ChatTabInDB:
         """데이터베이스에 저장된 특정 Chat_tab을 조회합니다."""
+        # 리팩토링 예정
         validate_chat_tab_id(tabId)
 
         try:
