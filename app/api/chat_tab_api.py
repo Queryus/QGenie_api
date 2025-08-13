@@ -61,6 +61,30 @@ def get_all_chat_tab(
     return ResponseMessage.success(value=response_data, code=CommonCode.SUCCESS_GET_CHAT_TAB)
 
 
+@router.get(
+    "/find/{tabId}",
+    response_model=ResponseMessage[ChatMessagesResponse],
+    summary="특정 탭의 메시지 전체 조회",
+)
+def get_chat_messages_by_tabId(
+    tabId: str = Path(..., description="채팅 탭 고유 ID"), service: ChatTabService = chat_tab_service_dependency
+) -> ResponseMessage[list[ChatMessagesResponse]]:
+    """tabId를 기준으로 해당 chat_tab의 전체 메시지를 가져옵니다."""
+    chat_tab = service.get_chat_tab_by_tabId(tabId)
+
+    chat_messages = service.get_chat_messages_by_tabId(tabId)
+
+    response_data = ChatMessagesResponse(
+        id=chat_tab.id,
+        name=chat_tab.name,
+        created_at=chat_tab.created_at,
+        updated_at=chat_tab.updated_at,
+        messages=chat_messages,
+    )
+
+    return ResponseMessage.success(value=response_data, code=CommonCode.SUCCESS_GET_CHAT_MESSAGES)
+
+
 @router.put(
     "/modify/{tabId}",
     response_model=ResponseMessage[ChatTabResponse],
@@ -103,27 +127,3 @@ def delete_chat_tab(
     """
     service.delete_chat_tab(tabId)
     return ResponseMessage.success(code=CommonCode.SUCCESS_CHAT_TAB_DELETE)
-
-
-@router.get(
-    "/find/{tabId}/messages",
-    response_model=ResponseMessage[ChatMessagesResponse],
-    summary="특정 탭의 메시지 전체 조회",
-)
-def get_chat_messages_by_tabId(
-    tabId: str = Path(..., description="채팅 탭 고유 ID"), service: ChatTabService = chat_tab_service_dependency
-) -> ResponseMessage[list[ChatMessagesResponse]]:
-    """tabId를 기준으로 해당 chat_tab의 전체 메시지를 가져옵니다."""
-    chat_tab = service.get_chat_tab_by_tabId(tabId)
-
-    chat_messages = service.get_chat_messages_by_tabId(tabId)
-
-    response_data = ChatMessagesResponse(
-        id=chat_tab.id,
-        name=chat_tab.name,
-        created_at=chat_tab.created_at,
-        updated_at=chat_tab.updated_at,
-        messages=chat_messages,
-    )
-
-    return ResponseMessage.success(value=response_data, code=CommonCode.SUCCESS_GET_CHAT_MESSAGES)
