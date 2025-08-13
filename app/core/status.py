@@ -41,6 +41,9 @@ class CommonCode(Enum):
     SUCCESS_GET_CHAT_MESSAGES = (status.HTTP_200_OK, "2304", "채팅 탭의 모든 메시지를 성공적으로 불러왔습니다.")
 
     """ ANNOTATION 성공 코드 - 24xx """
+    SUCCESS_CREATE_ANNOTATION = (status.HTTP_201_CREATED, "2400", "어노테이션을 성공적으로 생성하였습니다.")
+    SUCCESS_FIND_ANNOTATION = (status.HTTP_200_OK, "2401", "어노테이션 정보를 성공적으로 조회하였습니다.")
+    SUCCESS_DELETE_ANNOTATION = (status.HTTP_200_OK, "2402", "어노테이션을 성공적으로 삭제하였습니다.")
 
     """ SQL 성공 코드 - 25xx """
 
@@ -121,6 +124,10 @@ class CommonCode(Enum):
     """ AI CHAT, DB 서버 에러 코드 - 53xx """
 
     """ ANNOTATION 서버 에러 코드 - 54xx """
+    FAIL_CREATE_ANNOTATION = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5400", "어노테이션 생성 중 에러가 발생했습니다.")
+    FAIL_FIND_ANNOTATION = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5401", "어노테이션 조회 중 에러가 발생했습니다.")
+    FAIL_DELETE_ANNOTATION = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5402", "어노테이션 삭제 중 에러가 발생했습니다.")
+    FAIL_AI_SERVER_CONNECTION = (status.HTTP_503_SERVICE_UNAVAILABLE, "5403", "AI 서버 연결에 실패했습니다.")
 
     """ SQL 서버 에러 코드 - 55xx """
 
