@@ -3,12 +3,18 @@ import sqlite3
 from app.core.utils import get_db_path
 from app.schemas.annotation.db_model import (
     ColumnAnnotationInDB,
+    ConstraintColumnInDB,
     DatabaseAnnotationInDB,
+    IndexAnnotationInDB,
+    IndexColumnInDB,
     TableAnnotationInDB,
+    TableConstraintInDB,
 )
 from app.schemas.annotation.response_model import (
     ColumnAnnotationDetail,
+    ConstraintDetail,
     FullAnnotationResponse,
+    IndexDetail,
     TableAnnotationDetail,
 )
 
@@ -20,7 +26,10 @@ class AnnotationRepository:
         db_annotation: DatabaseAnnotationInDB,
         table_annotations: list[TableAnnotationInDB],
         column_annotations: list[ColumnAnnotationInDB],
-        # TODO: Add other annotation types
+        constraint_annotations: list[TableConstraintInDB],
+        constraint_column_annotations: list[ConstraintColumnInDB],
+        index_annotations: list[IndexAnnotationInDB],
+        index_column_annotations: list[IndexColumnInDB],
     ) -> None:
         """
         하나의 트랜잭션 내에서 전체 어노테이션 데이터를 저장합니다.
@@ -29,23 +38,22 @@ class AnnotationRepository:
         """
         cursor = db_conn.cursor()
 
-        # 1. Database Annotation 저장
+        # Database, Table, Column Annotations 저장
+        db_data = (
+            db_annotation.id,
+            db_annotation.db_profile_id,
+            db_annotation.database_name,
+            db_annotation.description,
+            db_annotation.created_at,
+            db_annotation.updated_at,
+        )
         cursor.execute(
             """
             INSERT INTO database_annotation (id, db_profile_id, database_name, description, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (
-                db_annotation.id,
-                db_annotation.db_profile_id,
-                db_annotation.database_name,
-                db_annotation.description,
-                db_annotation.created_at,
-                db_annotation.updated_at,
-            ),
+            db_data,
         )
-
-        # 2. Table Annotations 저장 (executemany 사용)
         table_data = [
             (t.id, t.database_annotation_id, t.table_name, t.description, t.created_at, t.updated_at)
             for t in table_annotations
@@ -57,8 +65,6 @@ class AnnotationRepository:
             """,
             table_data,
         )
-
-        # 3. Column Annotations 저장 (executemany 사용)
         column_data = [
             (
                 c.id,
@@ -83,7 +89,71 @@ class AnnotationRepository:
             column_data,
         )
 
-        # TODO: Constraint, Index 등 나머지 데이터 저장 로직 추가
+        # Constraint Annotations 저장
+        constraint_data = [
+            (
+                c.id,
+                c.table_annotation_id,
+                c.constraint_type,
+                c.name,
+                c.expression,
+                c.ref_table,
+                c.on_update_action,
+                c.on_delete_action,
+                c.created_at,
+                c.updated_at,
+            )
+            for c in constraint_annotations
+        ]
+        cursor.executemany(
+            """
+            INSERT INTO table_constraint (id, table_annotation_id, constraint_type, name, expression, ref_table, on_update_action, on_delete_action, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            constraint_data,
+        )
+        constraint_column_data = [
+            (
+                cc.id,
+                cc.constraint_id,
+                cc.column_annotation_id,
+                cc.position,
+                cc.referenced_column_name,
+                cc.created_at,
+                cc.updated_at,
+            )
+            for cc in constraint_column_annotations
+        ]
+        cursor.executemany(
+            """
+            INSERT INTO constraint_column (id, constraint_id, column_annotation_id, position, referenced_column_name, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            constraint_column_data,
+        )
+
+        # Index Annotations 저장
+        index_data = [
+            (i.id, i.table_annotation_id, i.name, i.is_unique, i.created_at, i.updated_at) for i in index_annotations
+        ]
+        cursor.executemany(
+            """
+            INSERT INTO index_annotation (id, table_annotation_id, name, is_unique, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            index_data,
+        )
+        index_column_data = [
+            (ic.id, ic.index_id, ic.column_annotation_id, ic.position, ic.created_at, ic.updated_at)
+            for ic in index_column_annotations
+        ]
+        cursor.executemany(
+            """
+            INSERT INTO index_column (id, index_id, column_annotation_id, position, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            index_column_data,
+        )
 
     def find_full_annotation_by_id(self, annotation_id: str) -> FullAnnotationResponse | None:
         """
@@ -98,13 +168,11 @@ class AnnotationRepository:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
-            # 1. 기본 Database Annotation 정보 조회
             cursor.execute("SELECT * FROM database_annotation WHERE id = ?", (annotation_id,))
             db_row = cursor.fetchone()
             if not db_row:
                 return None
 
-            # 2. 테이블 및 하위 정보 조회
             cursor.execute("SELECT * FROM table_annotation WHERE database_annotation_id = ?", (annotation_id,))
             table_rows = cursor.fetchall()
 
@@ -119,7 +187,45 @@ class AnnotationRepository:
                 )
                 columns = [ColumnAnnotationDetail.model_validate(dict(c)) for c in cursor.fetchall()]
 
-                # TODO: 제약조건 및 인덱스 정보 조회 로직 추가
+                # 제약조건 정보
+                cursor.execute(
+                    """
+                    SELECT tc.name, tc.constraint_type, ca.column_name
+                    FROM table_constraint tc
+                    JOIN constraint_column cc ON tc.id = cc.constraint_id
+                    JOIN column_annotation ca ON cc.column_annotation_id = ca.id
+                    WHERE tc.table_annotation_id = ?
+                    """,
+                    (table_id,),
+                )
+                constraint_map = {}
+                for row in cursor.fetchall():
+                    if row["name"] not in constraint_map:
+                        constraint_map[row["name"]] = {"type": row["constraint_type"], "columns": []}
+                    constraint_map[row["name"]]["columns"].append(row["column_name"])
+                constraints = [
+                    ConstraintDetail(name=k, type=v["type"], columns=v["columns"]) for k, v in constraint_map.items()
+                ]
+
+                # 인덱스 정보
+                cursor.execute(
+                    """
+                    SELECT ia.name, ia.is_unique, ca.column_name
+                    FROM index_annotation ia
+                    JOIN index_column ic ON ia.id = ic.index_id
+                    JOIN column_annotation ca ON ic.column_annotation_id = ca.id
+                    WHERE ia.table_annotation_id = ?
+                    """,
+                    (table_id,),
+                )
+                index_map = {}
+                for row in cursor.fetchall():
+                    if row["name"] not in index_map:
+                        index_map[row["name"]] = {"is_unique": bool(row["is_unique"]), "columns": []}
+                    index_map[row["name"]]["columns"].append(row["column_name"])
+                indexes = [
+                    IndexDetail(name=k, is_unique=v["is_unique"], columns=v["columns"]) for k, v in index_map.items()
+                ]
 
                 tables_details.append(
                     TableAnnotationDetail(
@@ -129,20 +235,14 @@ class AnnotationRepository:
                         created_at=table_row["created_at"],
                         updated_at=table_row["updated_at"],
                         columns=columns,
-                        constraints=[],  # Placeholder
-                        indexes=[],  # Placeholder
+                        constraints=constraints,
+                        indexes=indexes,
                     )
                 )
 
-            return FullAnnotationResponse(
-                id=db_row["id"],
-                db_profile_id=db_row["db_profile_id"],
-                database_name=db_row["database_name"],
-                description=db_row["description"],
-                tables=tables_details,
-                created_at=db_row["created_at"],
-                updated_at=db_row["updated_at"],
-            )
+            db_row_dict = dict(db_row)
+            db_row_dict["tables"] = tables_details
+            return FullAnnotationResponse.model_validate(db_row_dict)
         finally:
             if conn:
                 conn.close()

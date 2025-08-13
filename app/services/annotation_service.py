@@ -11,8 +11,12 @@ from app.core.utils import generate_prefixed_uuid, get_db_path
 from app.repository.annotation_repository import AnnotationRepository, annotation_repository
 from app.schemas.annotation.db_model import (
     ColumnAnnotationInDB,
+    ConstraintColumnInDB,
     DatabaseAnnotationInDB,
+    IndexAnnotationInDB,
+    IndexColumnInDB,
     TableAnnotationInDB,
+    TableConstraintInDB,
 )
 from app.schemas.annotation.request_model import AnnotationCreateRequest
 from app.schemas.annotation.response_model import AnnotationDeleteResponse, FullAnnotationResponse
@@ -37,7 +41,7 @@ class AnnotationService:
         """
         어노테이션 생성을 위한 전체 프로세스를 관장합니다.
         1. DB 프로필 및 전체 스키마 정보 조회
-        2. AI 서버에 요청 (현재는 Mock 데이터 사용)
+        2. TODO: AI 서버에 요청 (현재는 Mock 데이터 사용)
         3. 트랜잭션 내에서 전체 어노테이션 정보 저장
         """
         request.validate()
@@ -69,11 +73,17 @@ class AnnotationService:
                 updated_at=now,
             )
 
-            table_annos = []
-            col_annos = []
-            # ... 다른 어노테이션 리스트들도 초기화
+            # 어노테이션 리스트들 초기화
+            table_annos, col_annos, constraint_annos, constraint_col_annos, index_annos, index_col_annos = (
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+            )
 
-            # 테이블, 컬럼 어노테이션 데이터 준비
+            # AI 응답을 DB 모델로 변환
             for tbl_data in ai_response.get("tables", []):
                 table_id = generate_prefixed_uuid(DBSaveIdEnum.table_annotation.value)
                 table_annos.append(
@@ -86,10 +96,14 @@ class AnnotationService:
                         updated_at=now,
                     )
                 )
+
+                col_map = {}  # 컬럼 이름으로 ID를 찾기 위한 맵
                 for col_data in tbl_data.get("columns", []):
+                    col_id = generate_prefixed_uuid(DBSaveIdEnum.column_annotation.value)
+                    col_map[col_data["column_name"]] = col_id
                     col_annos.append(
                         ColumnAnnotationInDB(
-                            id=generate_prefixed_uuid(DBSaveIdEnum.column_annotation.value),
+                            id=col_id,
                             table_annotation_id=table_id,
                             column_name=col_data["column_name"],
                             description=col_data.get("annotation"),
@@ -98,9 +112,63 @@ class AnnotationService:
                         )
                     )
 
-            # 3.2 레포지토리를 통해 DB에 저장
-            self.repository.create_full_annotation(conn, db_anno, table_annos, col_annos)
+                for const_data in tbl_data.get("constraints", []):
+                    const_id = generate_prefixed_uuid(DBSaveIdEnum.table_constraint.value)
+                    constraint_annos.append(
+                        TableConstraintInDB(
+                            id=const_id,
+                            table_annotation_id=table_id,
+                            name=const_data["name"],
+                            constraint_type=const_data["type"],
+                            created_at=now,
+                            updated_at=now,
+                        )
+                    )
+                    for col_name in const_data.get("columns", []):
+                        constraint_col_annos.append(
+                            ConstraintColumnInDB(
+                                id=generate_prefixed_uuid(DBSaveIdEnum.constraint_column.value),
+                                constraint_id=const_id,
+                                column_annotation_id=col_map[col_name],
+                                created_at=now,
+                                updated_at=now,
+                            )
+                        )
 
+                for idx_data in tbl_data.get("indexes", []):
+                    idx_id = generate_prefixed_uuid(DBSaveIdEnum.index_annotation.value)
+                    index_annos.append(
+                        IndexAnnotationInDB(
+                            id=idx_id,
+                            table_annotation_id=table_id,
+                            name=idx_data["name"],
+                            is_unique=1 if idx_data["is_unique"] else 0,
+                            created_at=now,
+                            updated_at=now,
+                        )
+                    )
+                    for col_name in idx_data.get("columns", []):
+                        index_col_annos.append(
+                            IndexColumnInDB(
+                                id=generate_prefixed_uuid(DBSaveIdEnum.index_column.value),
+                                index_id=idx_id,
+                                column_annotation_id=col_map[col_name],
+                                created_at=now,
+                                updated_at=now,
+                            )
+                        )
+
+            # 3.2 레포지토리를 통해 DB에 저장
+            self.repository.create_full_annotation(
+                db_conn=conn,
+                db_annotation=db_anno,
+                table_annotations=table_annos,
+                column_annotations=col_annos,
+                constraint_annotations=constraint_annos,
+                constraint_column_annotations=constraint_col_annos,
+                index_annotations=index_annos,
+                index_column_annotations=index_col_annos,
+            )
             conn.commit()
 
         except sqlite3.Error as e:
@@ -161,6 +229,24 @@ class AnnotationService:
                 "columns": [
                     {"column_name": col.name, "annotation": f"Mock: '{col.name}' 컬럼에 대한 설명입니다."}
                     for col in table.columns
+                ],
+                "constraints": [
+                    {
+                        "name": c.name,
+                        "type": c.type,
+                        "columns": c.columns,
+                        "annotation": f"Mock: 제약조건 '{c.name}' 설명.",
+                    }
+                    for c in table.constraints
+                ],
+                "indexes": [
+                    {
+                        "name": i.name,
+                        "columns": i.columns,
+                        "is_unique": i.is_unique,
+                        "annotation": f"Mock: 인덱스 '{i.name}' 설명.",
+                    }
+                    for i in table.indexes
                 ],
             }
             mock_response["tables"].append(mock_table)

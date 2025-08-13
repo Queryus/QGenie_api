@@ -13,3 +13,8 @@ class DBSaveIdEnum(Enum):
     database_annotation = "DB-ANNO"
     table_annotation = "TBL-ANNO"
     column_annotation = "COL-ANNO"
+    table_constraint = "TC-ANNO"
+    constraint_column = "CC-ANNO"
+    index_annotation = "IDX-ANNO"
+    index_column = "IC-ANNO"
+    table_relationship = "TR-ANNO"
