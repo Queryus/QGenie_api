@@ -245,36 +245,35 @@ class UserDbRepository:
     def _find_columns_for_postgresql(self, cursor: Any, schema_name: str, table_name: str) -> list[ColumnInfo]:
         sql = """
             SELECT
-                column_name,
-                udt_name,
-                is_nullable,
-                column_default,
-                ordinal_position,
-                (SELECT pg_catalog.col_description(c.oid, a.attnum)
-                 FROM pg_catalog.pg_class c
-                 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
-                 WHERE c.relname = a.table_name AND n.nspname = a.table_schema) as comment,
-                CASE
-                    WHEN (
-                        SELECT constraint_type
-                        FROM information_schema.table_constraints tc
-                        JOIN information_schema.key_column_usage kcu
-                        ON tc.constraint_name = kcu.constraint_name
-                        WHERE tc.table_schema = a.table_schema
-                          AND tc.table_name = a.table_name
-                          AND kcu.column_name = a.column_name
-                          AND tc.constraint_type = 'PRIMARY KEY'
-                    ) = 'PRIMARY KEY' THEN TRUE
-                    ELSE FALSE
-                END as is_pk
+                c.column_name,
+                c.udt_name,
+                c.is_nullable,
+                c.column_default,
+                c.ordinal_position,
+                (SELECT pg_catalog.col_description(cls.oid, c.dtd_identifier::int)
+                 FROM pg_catalog.pg_class cls
+                 JOIN pg_catalog.pg_namespace n ON n.oid = cls.relnamespace
+                 WHERE cls.relname = c.table_name AND n.nspname = c.table_schema) as comment,
+                CASE WHEN kcu.column_name IS NOT NULL THEN TRUE ELSE FALSE END as is_pk
             FROM
-                information_schema.columns a
+                information_schema.columns c
+            LEFT JOIN information_schema.key_column_usage kcu
+                ON c.table_schema = kcu.table_schema
+                AND c.table_name = kcu.table_name
+                AND c.column_name = kcu.column_name
+                AND kcu.constraint_name IN (
+                    SELECT constraint_name
+                    FROM information_schema.table_constraints
+                    WHERE table_schema = %s
+                      AND table_name = %s
+                      AND constraint_type = 'PRIMARY KEY'
+                )
             WHERE
-                table_schema = %s AND table_name = %s
+                c.table_schema = %s AND c.table_name = %s
             ORDER BY
-                ordinal_position;
+                c.ordinal_position;
         """
-        cursor.execute(sql, (schema_name, table_name))
+        cursor.execute(sql, (schema_name, table_name, schema_name, table_name))
         columns_raw = cursor.fetchall()
         return [
             ColumnInfo(
