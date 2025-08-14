@@ -17,6 +17,7 @@ class DBProfileInfo(BaseModel):
     name: str | None = Field(None, description="연결할 데이터베이스명")
     username: str | None = Field(None, description="사용자 이름")
     password: str | None = Field(None, description="비밀번호")
+
     def validate_required_fields(self) -> None:
         """DB 종류별 필수 필드 유효성 검사"""
         required_fields_by_type = {
@@ -52,9 +53,11 @@ class DBProfileInfo(BaseModel):
             return True
         return False
 
+
 class UpdateOrCreateDBProfile(DBProfileInfo):
     id: str | None = Field(None, description="DB Key 값")
     view_name: str | None = Field(None, description="DB 노출명")
+
 
 class AllDBProfileInfo(DBProfileInfo):
     id: str | None = Field(..., description="DB Key 값")

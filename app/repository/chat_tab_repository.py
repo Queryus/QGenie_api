@@ -5,7 +5,6 @@ from app.schemas.chat_tab.db_model import ChatTabInDB
 
 
 class ChatTabRepository:
-
     def create_chat_tab(self, new_id: str, name: str) -> ChatTabInDB:
         """
         새로운 채팅 탭 이름을 데이터베이스에 저장하고, 저장된 객체를 반환합니다.
@@ -33,13 +32,14 @@ class ChatTabRepository:
             created_row = cursor.fetchone()
 
             if not created_row:
-                raise None
+                return None
 
             return ChatTabInDB.model_validate(dict(created_row))
 
         finally:
             if conn:
                 conn.close()
+
     def updated_chat_tab(self, id: str, new_name: str | None) -> ChatTabInDB | None:
         """채팅 탭ID에 해당하는 ChatName를 수정하고, 수정된 객체를 반환합니다."""
         db_path = get_db_path()
@@ -98,6 +98,7 @@ class ChatTabRepository:
         finally:
             if conn:
                 conn.close()
+
     def get_all_chat_tab(self) -> list[ChatTabInDB]:
         """데이터베이스에 저장된 모든 API Key를 조회합니다."""
         db_path = get_db_path()
@@ -114,5 +115,27 @@ class ChatTabRepository:
         finally:
             if conn:
                 conn.close()
+
+    def get_chat_tab_by_id(self, id: str | None) -> ChatTabInDB | None:
+        """ID에 해당하는 채팅 탭 정보를 가져옵니다."""
+        db_path = get_db_path()
+        conn = None
+        try:
+            conn = sqlite3.connect(str(db_path), timeout=10)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            cursor.execute("SELECT * FROM chat_tab WHERE id = ?", (id,))
+            row = cursor.fetchone()
+
+            if not row:
+                return None
+
+            return ChatTabInDB.model_validate(dict(row))
+
+        finally:
+            if conn:
+                conn.close()
+
 
 chat_tab_repository = ChatTabRepository()

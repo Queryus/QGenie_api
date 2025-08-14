@@ -28,7 +28,6 @@ class CommonCode(Enum):
     SUCCESS_UPDATE_PROFILE = (status.HTTP_200_OK, "2150", "디비 연결 정보를 업데이트 하였습니다.")
     SUCCESS_DELETE_PROFILE = (status.HTTP_200_OK, "2170", "디비 연결 정보를 삭제 하였습니다.")
 
-
     """ KEY 성공 코드 - 22xx """
     SUCCESS_DELETE_API_KEY = (status.HTTP_204_NO_CONTENT, "2200", "API KEY가 성공적으로 삭제되었습니다.")
     SUCCESS_UPDATE_API_KEY = (status.HTTP_200_OK, "2201", "API KEY가 성공적으로 수정되었습니다.")
@@ -39,6 +38,7 @@ class CommonCode(Enum):
     SUCCESS_CHAT_TAB_UPDATE = (status.HTTP_200_OK, "2301", "채팅 탭 이름이 성공적으로 수정되었습니다.")
     SUCCESS_CHAT_TAB_DELETE = (status.HTTP_200_OK, "2302", "채팅 탭을 성공적으로 삭제되었습니다.")
     SUCCESS_GET_CHAT_TAB = (status.HTTP_200_OK, "2303", "모든 채팅 탭을 성공적으로 조회하였습니다.")
+    SUCCESS_GET_CHAT_MESSAGES = (status.HTTP_200_OK, "2304", "채팅 탭의 모든 메시지를 성공적으로 불러왔습니다.")
 
     """ ANNOTATION 성공 코드 - 24xx """
 
@@ -78,6 +78,8 @@ class CommonCode(Enum):
         "채팅 탭 이름에 SQL 예약어나 허용되지 않는 특수문자가 포함되어 있습니다. "
         "허용되지 않는 특수 문자: 큰따옴표(\"), 작은따옴표('), 세미콜론(;), 꺾쇠괄호(<, >)",
     )
+    INVALID_CHAT_TAB_ID_FORMAT = (status.HTTP_400_BAD_REQUEST, "4303", "채팅 탭 ID의 형식이 올바르지 않습니다.")
+    NO_CHAT_TAB_DATA = (status.HTTP_404_NOT_FOUND, "4304", "해당 ID를 가진 채팅 탭을 찾을 수 없습니다.")
 
     """ ANNOTATION 클라이언트 에러 코드 - 44xx """
 
