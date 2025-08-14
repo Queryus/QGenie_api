@@ -407,7 +407,7 @@ class UserDbRepository:
 
         constraint_map = {}
         for row in raw_constraints:
-            (name, const_type, column, _, _, ref_table, ref_column, check_expr) = row
+            (name, const_type, column, on_update, on_delete, ref_table, ref_column, check_expr) = row
             if name not in constraint_map:
                 constraint_map[name] = {
                     "type": const_type,
@@ -415,6 +415,8 @@ class UserDbRepository:
                     "referenced_table": ref_table,
                     "referenced_columns": [],
                     "check_expression": check_expr,
+                    "on_update": on_update,
+                    "on_delete": on_delete,
                 }
             if column and column not in constraint_map[name]["columns"]:
                 constraint_map[name]["columns"].append(column)
@@ -429,6 +431,8 @@ class UserDbRepository:
                 referenced_table=data["referenced_table"],
                 referenced_columns=data["referenced_columns"] if data["referenced_columns"] else None,
                 check_expression=data["check_expression"],
+                on_update=data["on_update"],
+                on_delete=data["on_delete"],
             )
             for name, data in constraint_map.items()
         ]

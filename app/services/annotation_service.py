@@ -198,7 +198,7 @@ class AnnotationService:
                     is_nullable=1 if original_column.nullable else 0,
                     default_value=original_column.default,
                     description=col_data.get("annotation"),
-                    # TODO: check_expression, ordinal_position은 현재 original_column에 없음
+                    ordinal_position=original_column.ordinal_position,
                     created_at=now,
                     updated_at=now,
                 )
@@ -221,7 +221,9 @@ class AnnotationService:
                     name=original_constraint.name,
                     constraint_type=ConstraintTypeEnum(original_constraint.type),
                     ref_table=original_constraint.referenced_table,
-                    # TODO: on_update/on_delete/expression 등 추가 정보 필요
+                    expression=original_constraint.check_expression,
+                    on_update_action=original_constraint.on_update,
+                    on_delete_action=original_constraint.on_delete,
                     created_at=now,
                     updated_at=now,
                 )
