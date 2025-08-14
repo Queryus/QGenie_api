@@ -10,6 +10,9 @@ class ColumnAnnotationDetail(BaseModel):
     id: str
     column_name: str
     description: str | None = None
+    data_type: str | None = None
+    is_nullable: bool | None = None
+    default_value: str | None = None
 
 
 class ConstraintDetail(BaseModel):

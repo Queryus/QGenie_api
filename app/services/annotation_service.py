@@ -99,7 +99,7 @@ class AnnotationService:
         db_anno = DatabaseAnnotationInDB(
             id=annotation_id,
             db_profile_id=db_profile_id,
-            database_name=db_profile.name,
+            database_name=db_profile.name or db_profile.username,
             description=ai_response.get("database_annotation"),
             created_at=now,
             updated_at=now,
