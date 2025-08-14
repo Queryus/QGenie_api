@@ -96,6 +96,7 @@ class AnnotationRepository:
                 c.table_annotation_id,
                 c.constraint_type,
                 c.name,
+                c.description,
                 c.expression,
                 c.ref_table,
                 c.on_update_action,
@@ -107,8 +108,8 @@ class AnnotationRepository:
         ]
         cursor.executemany(
             """
-            INSERT INTO table_constraint (id, table_annotation_id, constraint_type, name, expression, ref_table, on_update_action, on_delete_action, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO table_constraint (id, table_annotation_id, constraint_type, name, description, expression, ref_table, on_update_action, on_delete_action, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             constraint_data,
         )
@@ -196,7 +197,7 @@ class AnnotationRepository:
                 # 제약조건 정보
                 cursor.execute(
                     """
-                    SELECT tc.name, tc.constraint_type, ca.column_name
+                    SELECT tc.name, tc.constraint_type, tc.description, ca.column_name
                     FROM table_constraint tc
                     LEFT JOIN constraint_column cc ON tc.id = cc.constraint_id
                     LEFT JOIN column_annotation ca ON cc.column_annotation_id = ca.id
@@ -210,7 +211,7 @@ class AnnotationRepository:
                         constraint_map[row["name"]] = {
                             "type": row["constraint_type"],
                             "columns": [],
-                            "description": None,
+                            "description": row["description"],
                         }
                     if row["column_name"]:
                         constraint_map[row["name"]]["columns"].append(row["column_name"])

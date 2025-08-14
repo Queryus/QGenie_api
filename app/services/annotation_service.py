@@ -220,6 +220,7 @@ class AnnotationService:
                     table_annotation_id=table_id,
                     name=original_constraint.name,
                     constraint_type=ConstraintTypeEnum(original_constraint.type),
+                    description=const_data.get("annotation"),
                     ref_table=original_constraint.referenced_table,
                     expression=original_constraint.check_expression,
                     on_update_action=original_constraint.on_update,
