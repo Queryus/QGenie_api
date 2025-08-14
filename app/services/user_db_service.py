@@ -192,10 +192,12 @@ class UserDbService:
 
                     try:
                         constraints = repository.find_constraints(
-                            driver_module, db_info.type, table_name, **connect_kwargs
+                            driver_module, db_info.type, schema_name, table_name, **connect_kwargs
                         )
-                        indexes = repository.find_indexes(driver_module, db_info.type, table_name, **connect_kwargs)
-                    except sqlite3.Error as e:
+                        indexes = repository.find_indexes(
+                            driver_module, db_info.type, schema_name, table_name, **connect_kwargs
+                        )
+                    except (sqlite3.Error, self._get_driver_module(db_info.type).Error) as e:
                         # 레포지토리에서 발생한 DB 예외를 서비스에서 처리
                         raise APIException(CommonCode.FAIL_FIND_CONSTRAINTS_OR_INDEXES) from e
 
@@ -268,7 +270,7 @@ class UserDbService:
         if db_type == "postgresql":
             return """
                 SELECT schema_name FROM information_schema.schemata
-                WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
+                WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
             """
         elif db_type in ["mysql", "mariadb"]:
             return "SELECT schema_name FROM information_schema.schemata"
@@ -288,7 +290,7 @@ class UserDbService:
                 """
             else:
                 return """
-                    SELECT table_name, table_schema FROM information_schema.tables
+                    SELECT table_name FROM information_schema.tables
                     WHERE table_type = 'BASE TABLE' AND table_schema = %s
                 """
         elif db_type in ["mysql", "mariadb"]:
@@ -312,11 +314,38 @@ class UserDbService:
         db_type = db_type.lower()
         if db_type == "postgresql":
             return """
-                SELECT column_name, data_type, is_nullable, column_default, table_name, table_schema
-                FROM information_schema.columns
-                WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
-                AND table_schema = %s
-                AND table_name = %s
+                SELECT
+                    c.column_name,
+                    c.data_type,
+                    c.is_nullable,
+                    c.column_default,
+                    pgd.description AS comment,
+                    (
+                        SELECT TRUE
+                        FROM information_schema.table_constraints tc
+                        JOIN information_schema.key_column_usage kcu
+                            ON tc.constraint_name = kcu.constraint_name
+                            AND tc.table_schema = kcu.table_schema
+                        WHERE tc.constraint_type = 'PRIMARY KEY'
+                        AND tc.table_schema = c.table_schema
+                        AND tc.table_name = c.table_name
+                        AND kcu.column_name = c.column_name
+                    ) AS is_pk,
+                    c.character_maximum_length,
+                    c.numeric_precision,
+                    c.numeric_scale
+                FROM
+                    information_schema.columns c
+                LEFT JOIN
+                    pg_catalog.pg_stat_all_tables st
+                    ON c.table_schema = st.schemaname AND c.table_name = st.relname
+                LEFT JOIN
+                    pg_catalog.pg_description pgd
+                    ON pgd.objoid = st.relid AND pgd.objsubid = c.ordinal_position
+                WHERE
+                    c.table_schema = %s AND c.table_name = %s
+                ORDER BY
+                    c.ordinal_position;
             """
         elif db_type in ["mysql", "mariadb"]:
             return """
