@@ -210,8 +210,10 @@ class UserDbRepository:
             connection = self._connect(driver_module, **kwargs)
             cursor = connection.cursor()
 
-            if db_type == "sqlite":
+            if db_type == DBTypesEnum.sqlite.name:
                 columns = self._find_columns_for_sqlite(cursor, table_name)
+            elif db_type == DBTypesEnum.postgresql.name:
+                columns = self._find_columns_for_postgresql(cursor, schema_name, table_name)
             else:
                 columns = self._find_columns_for_general(cursor, column_query, schema_name, table_name)
 
@@ -226,6 +228,7 @@ class UserDbRepository:
         pragma_sql = f"PRAGMA table_info('{table_name}')"
         cursor.execute(pragma_sql)
         columns_raw = cursor.fetchall()
+        # SQLite는 pragma에서 순서(cid)를 반환하지만, ordinal_position은 1부터 시작하는 표준이므로 +1
         return [
             ColumnInfo(
                 name=c[1],
@@ -234,6 +237,54 @@ class UserDbRepository:
                 default=c[4],
                 comment=None,
                 is_pk=(c[5] == 1),
+                ordinal_position=c[0] + 1,
+            )
+            for c in columns_raw
+        ]
+
+    def _find_columns_for_postgresql(self, cursor: Any, schema_name: str, table_name: str) -> list[ColumnInfo]:
+        sql = """
+            SELECT
+                column_name,
+                udt_name,
+                is_nullable,
+                column_default,
+                ordinal_position,
+                (SELECT pg_catalog.col_description(c.oid, a.attnum)
+                 FROM pg_catalog.pg_class c
+                 JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+                 WHERE c.relname = a.table_name AND n.nspname = a.table_schema) as comment,
+                CASE
+                    WHEN (
+                        SELECT constraint_type
+                        FROM information_schema.table_constraints tc
+                        JOIN information_schema.key_column_usage kcu
+                        ON tc.constraint_name = kcu.constraint_name
+                        WHERE tc.table_schema = a.table_schema
+                          AND tc.table_name = a.table_name
+                          AND kcu.column_name = a.column_name
+                          AND tc.constraint_type = 'PRIMARY KEY'
+                    ) = 'PRIMARY KEY' THEN TRUE
+                    ELSE FALSE
+                END as is_pk
+            FROM
+                information_schema.columns a
+            WHERE
+                table_schema = %s AND table_name = %s
+            ORDER BY
+                ordinal_position;
+        """
+        cursor.execute(sql, (schema_name, table_name))
+        columns_raw = cursor.fetchall()
+        return [
+            ColumnInfo(
+                name=c[0],
+                type=c[1],
+                nullable=(c[2] == "YES"),
+                default=c[3],
+                ordinal_position=c[4],
+                comment=c[5],
+                is_pk=c[6],
             )
             for c in columns_raw
         ]
