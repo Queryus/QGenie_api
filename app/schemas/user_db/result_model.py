@@ -55,11 +55,34 @@ class ColumnInfo(BaseModel):
     is_pk: bool = Field(False, description="기본 키(Primary Key) 여부")
 
 
+class ConstraintInfo(BaseModel):
+    """테이블 제약 조건 정보를 담는 모델"""
+
+    name: str | None = Field(None, description="제약 조건 이름")
+    type: str = Field(..., description="제약 조건 타입 (PRIMARY KEY, FOREIGN KEY, UNIQUE, CHECK)")
+    columns: list[str] = Field(..., description="제약 조건에 포함된 컬럼 목록")
+    # FOREIGN KEY 관련 필드
+    referenced_table: str | None = Field(None, description="참조하는 테이블 (FK)")
+    referenced_columns: list[str] | None = Field(None, description="참조하는 테이블의 컬럼 (FK)")
+    # CHECK 관련 필드
+    check_expression: str | None = Field(None, description="CHECK 제약 조건 표현식")
+
+
+class IndexInfo(BaseModel):
+    """테이블 인덱스 정보를 담는 모델"""
+
+    name: str | None = Field(None, description="인덱스 이름")
+    columns: list[str] = Field(..., description="인덱스에 포함된 컬럼 목록")
+    is_unique: bool = Field(False, description="고유 인덱스 여부")
+
+
 class TableInfo(BaseModel):
-    """단일 테이블의 이름과 컬럼 목록을 담는 모델"""
+    """단일 테이블의 이름과 상세 정보를 담는 모델"""
 
     name: str = Field(..., description="테이블 이름")
     columns: list[ColumnInfo] = Field([], description="컬럼 목록")
+    constraints: list[ConstraintInfo] = Field([], description="제약 조건 목록")
+    indexes: list[IndexInfo] = Field([], description="인덱스 목록")
     comment: str | None = Field(None, description="테이블 코멘트")
 
 

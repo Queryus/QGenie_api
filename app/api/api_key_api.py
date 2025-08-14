@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/actions",
+    "/create",
     response_model=ResponseMessage[APIKeyResponse],
     summary="API KEY 저장 (처음 한 번)",
     description="외부 AI 서비스의 API Key를 암호화하여 로컬 데이터베이스에 저장합니다.",

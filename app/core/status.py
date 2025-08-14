@@ -41,6 +41,9 @@ class CommonCode(Enum):
     SUCCESS_GET_CHAT_MESSAGES = (status.HTTP_200_OK, "2304", "채팅 탭의 모든 메시지를 성공적으로 불러왔습니다.")
 
     """ ANNOTATION 성공 코드 - 24xx """
+    SUCCESS_CREATE_ANNOTATION = (status.HTTP_201_CREATED, "2400", "어노테이션을 성공적으로 생성하였습니다.")
+    SUCCESS_FIND_ANNOTATION = (status.HTTP_200_OK, "2401", "어노테이션 정보를 성공적으로 조회하였습니다.")
+    SUCCESS_DELETE_ANNOTATION = (status.HTTP_200_OK, "2402", "어노테이션을 성공적으로 삭제하였습니다.")
 
     """ SQL 성공 코드 - 25xx """
 
@@ -82,6 +85,7 @@ class CommonCode(Enum):
     NO_CHAT_TAB_DATA = (status.HTTP_404_NOT_FOUND, "4304", "해당 ID를 가진 채팅 탭을 찾을 수 없습니다.")
 
     """ ANNOTATION 클라이언트 에러 코드 - 44xx """
+    INVALID_ANNOTATION_REQUEST = (status.HTTP_400_BAD_REQUEST, "4400", "어노테이션 요청 데이터가 유효하지 않습니다.")
 
     """ SQL 클라이언트 에러 코드 - 45xx """
 
@@ -107,6 +111,11 @@ class CommonCode(Enum):
     FAIL_FIND_SCHEMAS = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5102", "디비 스키마 정보 조회 중 에러가 발생했습니다.")
     FAIL_FIND_TABLES = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5103", "디비 테이블 정보 조회 중 에러가 발생했습니다.")
     FAIL_FIND_COLUMNS = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5104", "디비 컬럼 정보 조회 중 에러가 발생했습니다.")
+    FAIL_FIND_CONSTRAINTS_OR_INDEXES = (
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "5105",
+        "디비 제약조건 또는 인덱스 정보 조회 중 에러가 발생했습니다.",
+    )
     FAIL_SAVE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5130", "디비 정보 저장 중 에러가 발생했습니다.")
     FAIL_UPDATE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5150", "디비 정보 업데이트 중 에러가 발생했습니다.")
     FAIL_DELETE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5170", "디비 정보 삭제 중 에러가 발생했습니다.")
@@ -116,6 +125,15 @@ class CommonCode(Enum):
     """ AI CHAT, DB 서버 에러 코드 - 53xx """
 
     """ ANNOTATION 서버 에러 코드 - 54xx """
+    FAIL_CREATE_ANNOTATION = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5400", "어노테이션 생성 중 에러가 발생했습니다.")
+    FAIL_FIND_ANNOTATION = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5401", "어노테이션 조회 중 에러가 발생했습니다.")
+    FAIL_DELETE_ANNOTATION = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5402", "어노테이션 삭제 중 에러가 발생했습니다.")
+    FAIL_AI_SERVER_CONNECTION = (status.HTTP_503_SERVICE_UNAVAILABLE, "5403", "AI 서버 연결에 실패했습니다.")
+    FAIL_AI_SERVER_PROCESSING = (
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "5404",
+        "AI 서버가 요청을 처리하는 데 실패했습니다.",
+    )
 
     """ SQL 서버 에러 코드 - 55xx """
 
