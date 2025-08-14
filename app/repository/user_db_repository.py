@@ -406,7 +406,13 @@ class UserDbRepository:
 
         constraint_map = {}
         for row in raw_constraints:
-            (name, const_type, column, on_update, on_delete, ref_table, ref_column, check_expr) = row
+            # Filter out 'NOT NULL' constraints which are handled by `is_nullable` in column info
+            const_type = row[1]
+            check_clause = row[7]
+            if const_type == "CHECK" and check_clause and "IS NOT NULL" in check_clause.upper():
+                continue
+
+            (name, _, column, on_update, on_delete, ref_table, ref_column, check_expr) = row
             if name not in constraint_map:
                 constraint_map[name] = {
                     "type": const_type,
