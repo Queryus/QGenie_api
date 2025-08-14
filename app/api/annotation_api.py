@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.post(
-    "/actions",
+    "/create",
     response_model=ResponseMessage[FullAnnotationResponse],
     summary="새로운 어노테이션 생성",
 )
