@@ -20,6 +20,11 @@ from app.schemas.annotation.response_model import (
 
 
 class AnnotationRepository:
+    """
+    어노테이션 데이터에 대한 데이터베이스 CRUD 작업을 처리합니다.
+    모든 메서드는 내부적으로 `sqlite3`를 사용하여 로컬 DB와 상호작용합니다.
+    """
+
     def create_full_annotation(
         self,
         db_conn: sqlite3.Connection,

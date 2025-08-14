@@ -36,6 +36,13 @@ class AnnotationService:
     def __init__(
         self, repository: AnnotationRepository = annotation_repository, user_db_serv: UserDbService = user_db_service
     ):
+        """
+        AnnotationService를 초기화합니다.
+
+        Args:
+            repository (AnnotationRepository): 어노테이션 레포지토리 의존성 주입.
+            user_db_serv (UserDbService): 사용자 DB 서비스 의존성 주입.
+        """
         self.repository = repository
         self.user_db_service = user_db_serv
 
@@ -90,6 +97,9 @@ class AnnotationService:
         db_profile_id: str,
         full_schema_info: list[UserDBTableInfo],
     ) -> dict[str, Any]:
+        """
+        AI 서버의 응답을 받아서 DB에 저장할 수 있는 모델 딕셔너리로 변환합니다.
+        """
         now = datetime.now()
         annotation_id = generate_prefixed_uuid(DBSaveIdEnum.database_annotation.value)
 
@@ -159,6 +169,9 @@ class AnnotationService:
         database_annotation_id: str,
         now: datetime,
     ) -> tuple:
+        """
+        단일 테이블에 대한 모든 하위 어노테이션(컬럼, 제약조건, 인덱스)을 생성합니다.
+        """
         table_id = generate_prefixed_uuid(DBSaveIdEnum.table_annotation.value)
         table_anno = TableAnnotationInDB(
             id=table_id,
@@ -184,6 +197,9 @@ class AnnotationService:
     def _process_columns(
         self, tbl_data: dict, original_table: UserDBTableInfo, table_id: str, col_map: dict, now: datetime
     ) -> list[ColumnAnnotationInDB]:
+        """
+        테이블의 컬럼 어노테이션 모델 리스트를 생성합니다.
+        """
         col_annos = []
         for col_data in tbl_data.get("columns", []):
             original_column = next((c for c in original_table.columns if c.name == col_data["column_name"]), None)
@@ -208,6 +224,9 @@ class AnnotationService:
     def _process_constraints(
         self, tbl_data: dict, original_table: UserDBTableInfo, table_id: str, col_map: dict, now: datetime
     ) -> tuple[list[TableConstraintInDB], list[ConstraintColumnInDB]]:
+        """
+        테이블의 제약조건 및 제약조건 컬럼 어노테이션 모델 리스트를 생성합니다.
+        """
         constraint_annos, constraint_col_annos = [], []
         for const_data in tbl_data.get("constraints", []):
             original_constraint = next((c for c in original_table.constraints if c.name == const_data["name"]), None)
@@ -253,6 +272,9 @@ class AnnotationService:
     def _process_indexes(
         self, tbl_data: dict, original_table: UserDBTableInfo, table_id: str, col_map: dict, now: datetime
     ) -> tuple[list[IndexAnnotationInDB], list[IndexColumnInDB]]:
+        """
+        테이블의 인덱스 및 인덱스 컬럼 어노테이션 모델 리스트를 생성합니다.
+        """
         index_annos, index_col_annos = [], []
         for idx_data in tbl_data.get("indexes", []):
             original_index = next((i for i in original_table.indexes if i.name == idx_data["name"]), None)
@@ -285,6 +307,9 @@ class AnnotationService:
         return index_annos, index_col_annos
 
     def get_full_annotation(self, annotation_id: str) -> FullAnnotationResponse:
+        """
+        ID를 기반으로 완전한 어노테이션 정보를 조회합니다.
+        """
         try:
             annotation = self.repository.find_full_annotation_by_id(annotation_id)
             if not annotation:
@@ -294,6 +319,9 @@ class AnnotationService:
             raise APIException(CommonCode.FAIL_FIND_ANNOTATION) from e
 
     def delete_annotation(self, annotation_id: str) -> AnnotationDeleteResponse:
+        """
+        ID를 기반으로 어노테이션 및 관련 하위 데이터를 모두 삭제합니다.
+        """
         try:
             is_deleted = self.repository.delete_annotation_by_id(annotation_id)
             if not is_deleted:
