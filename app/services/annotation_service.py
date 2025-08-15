@@ -10,6 +10,15 @@ from app.core.exceptions import APIException
 from app.core.status import CommonCode
 from app.core.utils import generate_prefixed_uuid, get_db_path
 from app.repository.annotation_repository import AnnotationRepository, annotation_repository
+from app.schemas.annotation.ai_model import (
+    AIAnnotationRequest,
+    AIColumnInfo,
+    AIConstraintInfo,
+    AIDatabaseInfo,
+    AIIndexInfo,
+    AIRelationship,
+    AITableInfo,
+)
 from app.schemas.annotation.db_model import (
     ColumnAnnotationInDB,
     ConstraintColumnInDB,
@@ -49,23 +58,29 @@ class AnnotationService:
     async def create_annotation(self, request: AnnotationCreateRequest) -> FullAnnotationResponse:
         """
         어노테이션 생성을 위한 전체 프로세스를 관장합니다.
-        1. DB 프로필 및 전체 스키마 정보 조회
-        2. TODO: AI 서버에 요청 (현재는 Mock 데이터 사용)
-        3. 트랜잭션 내에서 전체 어노테이션 정보 저장
+        1. DB 프로필, 전체 스키마 정보, 샘플 데이터 조회
+        2. AI 서버에 요청할 데이터 모델 생성
+        3. TODO: AI 서버에 요청 (현재는 Mock 데이터 사용)
+        4. 트랜잭션 내에서 전체 어노테이션 정보 저장
         """
         try:
             request.validate()
         except ValueError as e:
             raise APIException(CommonCode.INVALID_ANNOTATION_REQUEST, detail=str(e)) from e
 
-        # 1. DB 프로필 및 전체 스키마 정보 조회
+        # 1. DB 프로필, 전체 스키마 정보, 샘플 데이터 조회
         db_profile = self.user_db_service.find_profile(request.db_profile_id)
         full_schema_info = self.user_db_service.get_full_schema_info(db_profile)
+        sample_rows = self.user_db_service.get_sample_rows(db_profile, full_schema_info)
 
-        # 2. AI 서버에 요청 (현재는 Mock 데이터 사용)
-        ai_response = await self._request_annotation_to_ai_server(full_schema_info)
+        # 2. AI 서버에 요청할 데이터 모델 생성
+        ai_request_body = self._prepare_ai_request_body(db_profile, full_schema_info, sample_rows)
+        print(ai_request_body.model_dump_json(indent=2))
 
-        # 3. 트랜잭션 내에서 전체 어노테이션 정보 저장
+        # 3. AI 서버에 요청 (현재는 Mock 데이터 사용)
+        ai_response = await self._request_annotation_to_ai_server(ai_request_body)
+
+        # 4. 트랜잭션 내에서 전체 어노테이션 정보 저장
         db_path = get_db_path()
         conn = None
         try:
@@ -89,6 +104,68 @@ class AnnotationService:
                 conn.close()
 
         return self.get_full_annotation(annotation_id)
+
+    def _prepare_ai_request_body(
+        self,
+        db_profile: AllDBProfileInfo,
+        full_schema_info: list[UserDBTableInfo],
+        sample_rows: dict[str, list[dict[str, Any]]],
+    ) -> AIAnnotationRequest:
+        """
+        AI 서버에 보낼 요청 본문을 Pydantic 모델로 생성합니다.
+        """
+        ai_tables = []
+        ai_relationships = []
+
+        for table_info in full_schema_info:
+            # FK 제약조건을 분리하여 relationships 목록 생성
+            non_fk_constraints = []
+            for const in table_info.constraints:
+                if const.type == "FOREIGN KEY" and const.referenced_table and const.referenced_columns:
+                    ai_relationships.append(
+                        AIRelationship(
+                            from_table=table_info.name,
+                            from_columns=const.columns,
+                            to_table=const.referenced_table,
+                            to_columns=const.referenced_columns,
+                        )
+                    )
+                else:
+                    non_fk_constraints.append(
+                        AIConstraintInfo(
+                            name=const.name,
+                            type=const.type,
+                            columns=const.columns,
+                            check_expression=const.check_expression,
+                        )
+                    )
+
+            ai_table = AITableInfo(
+                table_name=table_info.name,
+                columns=[
+                    AIColumnInfo(
+                        column_name=col.name,
+                        data_type=col.type,
+                        is_pk=col.is_pk,
+                        is_nullable=col.nullable,
+                        default_value=col.default,
+                    )
+                    for col in table_info.columns
+                ],
+                constraints=non_fk_constraints,
+                indexes=[
+                    AIIndexInfo(name=idx.name, columns=idx.columns, is_unique=idx.is_unique)
+                    for idx in table_info.indexes
+                ],
+                sample_rows=sample_rows.get(table_info.name, []),
+            )
+            ai_tables.append(ai_table)
+
+        ai_database = AIDatabaseInfo(
+            database_name=db_profile.name or db_profile.username, tables=ai_tables, relationships=ai_relationships
+        )
+
+        return AIAnnotationRequest(dbms_type=db_profile.type, databases=[ai_database])
 
     def _transform_ai_response_to_db_models(
         self,
@@ -330,13 +407,13 @@ class AnnotationService:
         except sqlite3.Error as e:
             raise APIException(CommonCode.FAIL_DELETE_ANNOTATION) from e
 
-    async def _request_annotation_to_ai_server(self, schema_info: list[UserDBTableInfo]) -> dict:
+    async def _request_annotation_to_ai_server(self, ai_request: AIAnnotationRequest) -> dict:
         """AI 서버에 스키마 정보를 보내고 어노테이션을 받아옵니다."""
         # 우선은 목업 데이터 활용
-        return self._get_mock_ai_response(schema_info)
+        return self._get_mock_ai_response(ai_request)
 
         # Real implementation below
-        # request_body = {"database_schema": {"tables": [table.model_dump() for table in schema_info]}}
+        # request_body = ai_request.model_dump()
         # async with httpx.AsyncClient() as client:
         #     try:
         #         response = await client.post(AI_SERVER_URL, json=request_body, timeout=60.0)
@@ -347,19 +424,21 @@ class AnnotationService:
         #     except httpx.RequestError as e:
         #         raise APIException(CommonCode.FAIL_AI_SERVER_CONNECTION, detail=f"AI server connection failed: {e}") from e
 
-    def _get_mock_ai_response(self, schema_info: list[UserDBTableInfo]) -> dict:
+    def _get_mock_ai_response(self, ai_request: AIAnnotationRequest) -> dict:
         """테스트를 위한 Mock AI 서버 응답 생성"""
+        # 요청 데이터를 기반으로 동적으로 Mock 응답을 생성하도록 수정
+        db_info = ai_request.databases[0]
         mock_response = {
-            "database_annotation": "Mock: 데이터베이스 전체에 대한 설명입니다.",
+            "database_annotation": f"Mock: '{db_info.database_name}' 데이터베이스 전체에 대한 설명입니다.",
             "tables": [],
             "relationships": [],
         }
-        for table in schema_info:
+        for table in db_info.tables:
             mock_table = {
-                "table_name": table.name,
-                "annotation": f"Mock: '{table.name}' 테이블에 대한 설명입니다.",
+                "table_name": table.table_name,
+                "annotation": f"Mock: '{table.table_name}' 테이블에 대한 설명입니다.",
                 "columns": [
-                    {"column_name": col.name, "annotation": f"Mock: '{col.name}' 컬럼에 대한 설명입니다."}
+                    {"column_name": col.column_name, "annotation": f"Mock: '{col.column_name}' 컬럼에 대한 설명입니다."}
                     for col in table.columns
                 ],
                 "constraints": [
@@ -382,6 +461,17 @@ class AnnotationService:
                 ],
             }
             mock_response["tables"].append(mock_table)
+
+        for rel in db_info.relationships:
+            mock_response["relationships"].append(
+                {
+                    "from_table": rel.from_table,
+                    "from_columns": rel.from_columns,
+                    "to_table": rel.to_table,
+                    "to_columns": rel.to_columns,
+                    "annotation": f"Mock: '{rel.from_table}'과 '{rel.to_table}'의 관계 설명.",
+                }
+            )
         return mock_response
 
 
