@@ -44,7 +44,7 @@ def get_annotation(
 
 
 @router.get(
-    "/by-db-profile/{db_profile_id}",
+    "/find/db/{db_profile_id}",
     response_model=ResponseMessage[FullAnnotationResponse],
     summary="DB 프로필 ID로 어노테이션 조회",
 )
