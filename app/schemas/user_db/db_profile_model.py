@@ -57,10 +57,12 @@ class DBProfileInfo(BaseModel):
 class UpdateOrCreateDBProfile(DBProfileInfo):
     id: str | None = Field(None, description="DB Key 값")
     view_name: str | None = Field(None, description="DB 노출명")
+    annotation_id: str | None = Field(None, description="연결된 어노테이션 ID")
 
 
 class AllDBProfileInfo(DBProfileInfo):
     id: str | None = Field(..., description="DB Key 값")
     view_name: str | None = Field(None, description="DB 노출명")
+    annotation_id: str | None = Field(None, description="연결된 어노테이션 ID")
     created_at: datetime = Field(..., description="profile 저장일")
     updated_at: datetime = Field(..., description="profile 수정일")

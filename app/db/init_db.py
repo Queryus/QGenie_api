@@ -80,14 +80,18 @@ def initialize_database():
             "username": "VARCHAR(128)",
             "password": "VARCHAR(128)",
             "view_name": "VARCHAR(64)",
+            "annotation_id": "VARCHAR(64)",
             "created_at": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
             "updated_at": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            "FOREIGN KEY (annotation_id)": "REFERENCES database_annotation(id) ON DELETE SET NULL",
         }
         create_sql = (
             f"CREATE TABLE IF NOT EXISTS db_profile ({', '.join([f'{k} {v}' for k, v in db_profile_cols.items()])})"
         )
         cursor.execute(create_sql)
-        _synchronize_table(cursor, "db_profile", db_profile_cols)
+        _synchronize_table(
+            cursor, "db_profile", {k: v for k, v in db_profile_cols.items() if not k.startswith("FOREIGN KEY")}
+        )
 
         cursor.execute(
             """
