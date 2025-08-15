@@ -528,6 +528,59 @@ class UserDbRepository:
             for name, data in index_map.items()
         ]
 
+    def find_sample_rows(
+        self, driver_module: Any, db_type: str, schema_name: str, table_names: list[str], **kwargs: Any
+    ) -> dict[str, list[dict[str, Any]]]:
+        """
+        주어진 테이블 목록에 대해 상위 3개의 샘플 행을 조회합니다.
+        - 실패 시 DB 드라이버의 예외를 직접 발생시킵니다.
+        """
+        connection = None
+        try:
+            connection = self._connect(driver_module, **kwargs)
+            cursor = connection.cursor()
+
+            if db_type == DBTypesEnum.sqlite.name:
+                return self._find_sample_rows_for_sqlite(cursor, table_names)
+            elif db_type == DBTypesEnum.postgresql.name:
+                return self._find_sample_rows_for_postgresql(cursor, schema_name, table_names)
+            # elif db_type == ...:
+            return {table_name: [] for table_name in table_names}
+        finally:
+            if connection:
+                connection.close()
+
+    def _find_sample_rows_for_sqlite(self, cursor: Any, table_names: list[str]) -> dict[str, list[dict[str, Any]]]:
+        sample_rows_map = {}
+        for table_name in table_names:
+            try:
+                # 컬럼명 조회를 위해 PRAGMA 사용
+                cursor.execute(f"PRAGMA table_info('{table_name}')")
+                columns = [row[1] for row in cursor.fetchall()]
+
+                # 데이터 조회
+                cursor.execute(f'SELECT * FROM "{table_name}" LIMIT 3')
+                rows = cursor.fetchall()
+                sample_rows_map[table_name] = [dict(zip(columns, row, strict=False)) for row in rows]
+            except Exception:
+                sample_rows_map[table_name] = []  # 오류 발생 시 빈 리스트 할당
+        return sample_rows_map
+
+    def _find_sample_rows_for_postgresql(
+        self, cursor: Any, schema_name: str, table_names: list[str]
+    ) -> dict[str, list[dict[str, Any]]]:
+        sample_rows_map = {}
+        for table_name in table_names:
+            try:
+                # PostgreSQL은 cursor.description을 통해 컬럼명을 바로 얻을 수 있음
+                cursor.execute(f'SELECT * FROM "{schema_name}"."{table_name}" LIMIT 3')
+                columns = [desc[0] for desc in cursor.description]
+                rows = cursor.fetchall()
+                sample_rows_map[table_name] = [dict(zip(columns, row, strict=False)) for row in rows]
+            except Exception:
+                sample_rows_map[table_name] = []
+        return sample_rows_map
+
     # ─────────────────────────────
     # DB 연결 메서드
     # ─────────────────────────────

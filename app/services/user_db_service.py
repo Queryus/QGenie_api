@@ -152,7 +152,7 @@ class UserDbService:
 
     def get_full_schema_info(
         self, db_info: AllDBProfileInfo, repository: UserDbRepository = user_db_repository
-    ) -> SchemaInfoResult:
+    ) -> list[TableInfo]:
         """
         DB 프로필 정보를 받아 해당 데이터베이스의 전체 스키마 정보
         (테이블, 컬럼, 제약조건, 인덱스)를 조회하여 반환합니다.
@@ -218,6 +218,24 @@ class UserDbService:
         except Exception as e:
             # 그 외 모든 예외는 일반 실패로 처리
             raise APIException(CommonCode.FAIL) from e
+
+    def get_sample_rows(
+        self, db_info: AllDBProfileInfo, table_infos: list[TableInfo], repository: UserDbRepository = user_db_repository
+    ) -> dict[str, list[dict[str, Any]]]:
+        """
+        테이블 정보 목록을 받아 각 테이블의 샘플 데이터를 조회하여 반환합니다.
+        """
+        try:
+            driver_module = self._get_driver_module(db_info.type)
+            connect_kwargs = self._prepare_connection_args(db_info)
+
+            # SQLite는 스키마 이름이 필요 없음
+            schema_name = db_info.name if db_info.type != "sqlite" else ""
+            table_names = [table.name for table in table_infos]
+
+            return repository.find_sample_rows(driver_module, db_info.type, schema_name, table_names, **connect_kwargs)
+        except Exception as e:
+            raise APIException(CommonCode.FAIL_FIND_SAMPLE_ROWS) from e
 
     def _get_driver_module(self, db_type: str):
         """
