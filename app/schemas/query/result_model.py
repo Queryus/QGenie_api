@@ -27,3 +27,9 @@ class InsertLocalDBResult(BasicResult):
     """DB 결과를 위한 확장 모델"""
 
     data: str = Field(..., description="쿼리 수행 후 결과")
+
+
+class SelectQueryHistoryResult(BasicResult):
+    """DB 결과를 위한 확장 모델"""
+
+    data: dict = Field(..., description="쿼리 이력 조회")
