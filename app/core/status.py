@@ -59,6 +59,7 @@ class CommonCode(Enum):
     """ DRIVER, DB 클라이언트 에러 코드 - 41xx """
     INVALID_DB_DRIVER = (status.HTTP_409_CONFLICT, "4100", "지원하지 않는 데이터베이스입니다.")
     NO_DB_DRIVER = (status.HTTP_400_BAD_REQUEST, "4101", "데이터베이스는 필수 값입니다.")
+    NO_DB_PROFILE_FOUND = (status.HTTP_404_NOT_FOUND, "4102", "해당 ID의 DB 프로필을 찾을 수 없습니다.")
 
     """ KEY 클라이언트 에러 코드 - 42xx """
     INVALID_API_KEY_FORMAT = (status.HTTP_400_BAD_REQUEST, "4200", "API 키의 형식이 올바르지 않습니다.")
@@ -86,6 +87,7 @@ class CommonCode(Enum):
 
     """ ANNOTATION 클라이언트 에러 코드 - 44xx """
     INVALID_ANNOTATION_REQUEST = (status.HTTP_400_BAD_REQUEST, "4400", "어노테이션 요청 데이터가 유효하지 않습니다.")
+    NO_ANNOTATION_FOR_PROFILE = (status.HTTP_404_NOT_FOUND, "4401", "해당 DB 프로필에 연결된 어노테이션이 없습니다.")
 
     """ SQL 클라이언트 에러 코드 - 45xx """
 
@@ -116,6 +118,7 @@ class CommonCode(Enum):
         "5105",
         "디비 제약조건 또는 인덱스 정보 조회 중 에러가 발생했습니다.",
     )
+    FAIL_FIND_SAMPLE_ROWS = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5106", "샘플 데이터 조회 중 에러가 발생했습니다.")
     FAIL_SAVE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5130", "디비 정보 저장 중 에러가 발생했습니다.")
     FAIL_UPDATE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5150", "디비 정보 업데이트 중 에러가 발생했습니다.")
     FAIL_DELETE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5170", "디비 정보 삭제 중 에러가 발생했습니다.")

@@ -142,8 +142,10 @@ class UserDbRepository:
             row = cursor.fetchone()
 
             if not row:
-                raise APIException(CommonCode.NO_SEARCH_DATA)
+                raise APIException(CommonCode.NO_DB_PROFILE_FOUND)
             return AllDBProfileInfo(**dict(row))
+        except APIException:
+            raise
         except sqlite3.Error as e:
             raise APIException(CommonCode.FAIL_FIND_PROFILE) from e
         except Exception as e:

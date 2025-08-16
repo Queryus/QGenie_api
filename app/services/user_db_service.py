@@ -34,7 +34,12 @@ class UserDbService:
         try:
             driver_module = self._get_driver_module(db_info.type)
             connect_kwargs = self._prepare_connection_args(db_info)
-            return repository.connection_test(driver_module, **connect_kwargs)
+            result = repository.connection_test(driver_module, **connect_kwargs)
+            if not result.is_successful:
+                raise APIException(result.code)
+            return result
+        except APIException:
+            raise
         except Exception as e:
             raise APIException(CommonCode.FAIL) from e
 
@@ -46,11 +51,15 @@ class UserDbService:
         """
         create_db_info.id = generate_prefixed_uuid(DBSaveIdEnum.user_db.value)
         try:
-            # [수정] 쿼리와 데이터를 서비스에서 생성하여 레포지토리로 전달합니다.
             sql, data = self._get_create_query_and_data(create_db_info)
-            return repository.create_profile(sql, data, create_db_info)
+            result = repository.create_profile(sql, data, create_db_info)
+            if not result.is_successful:
+                raise APIException(result.code)
+            return result
+        except APIException:
+            raise
         except Exception as e:
-            raise APIException(CommonCode.FAIL) from e
+            raise APIException(CommonCode.FAIL_SAVE_PROFILE) from e
 
     def update_profile(
         self, update_db_info: UpdateOrCreateDBProfile, repository: UserDbRepository = user_db_repository
@@ -59,33 +68,45 @@ class UserDbService:
         DB 연결 정보를 업데이트 후 결과를 반환합니다.
         """
         try:
-            # [수정] 쿼리와 데이터를 서비스에서 생성하여 레포지토리로 전달합니다.
             sql, data = self._get_update_query_and_data(update_db_info)
-            return repository.update_profile(sql, data, update_db_info)
+            result = repository.update_profile(sql, data, update_db_info)
+            if not result.is_successful:
+                raise APIException(result.code)
+            return result
+        except APIException:
+            raise
         except Exception as e:
-            raise APIException(CommonCode.FAIL) from e
+            raise APIException(CommonCode.FAIL_UPDATE_PROFILE) from e
 
     def delete_profile(self, profile_id: str, repository: UserDbRepository = user_db_repository) -> ChangeProfileResult:
         """
         DB 연결 정보를 삭제 후 결과를 반환합니다.
         """
         try:
-            # [수정] 쿼리와 데이터를 서비스에서 생성하여 레포지토리로 전달합니다.
             sql, data = self._get_delete_query_and_data(profile_id)
-            return repository.delete_profile(sql, data, profile_id)
+            result = repository.delete_profile(sql, data, profile_id)
+            if not result.is_successful:
+                raise APIException(result.code)
+            return result
+        except APIException:
+            raise
         except Exception as e:
-            raise APIException(CommonCode.FAIL) from e
+            raise APIException(CommonCode.FAIL_DELETE_PROFILE) from e
 
     def find_all_profile(self, repository: UserDbRepository = user_db_repository) -> AllDBProfileResult:
         """
         모든 DB 연결 정보를 반환합니다.
         """
         try:
-            # [수정] 쿼리를 서비스에서 생성하여 레포지토리로 전달합니다.
             sql = self._get_find_all_query()
-            return repository.find_all_profile(sql)
+            result = repository.find_all_profile(sql)
+            if not result.is_successful:
+                raise APIException(result.code)
+            return result
+        except APIException:
+            raise
         except Exception as e:
-            raise APIException(CommonCode.FAIL) from e
+            raise APIException(CommonCode.FAIL_FIND_PROFILE) from e
 
     def find_profile(self, profile_id, repository: UserDbRepository = user_db_repository) -> AllDBProfileInfo:
         """
@@ -95,8 +116,10 @@ class UserDbService:
             # [수정] 쿼리와 데이터를 서비스에서 생성하여 레포지토리로 전달합니다.
             sql, data = self._get_find_one_query_and_data(profile_id)
             return repository.find_profile(sql, data)
+        except APIException:
+            raise
         except Exception as e:
-            raise APIException(CommonCode.FAIL) from e
+            raise APIException(CommonCode.FAIL_FIND_PROFILE) from e
 
     def find_schemas(
         self, db_info: AllDBProfileInfo, repository: UserDbRepository = user_db_repository
