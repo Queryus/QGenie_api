@@ -9,6 +9,7 @@ class DBSaveIdEnum(Enum):
     driver = "DRIVER"
     api_key = "API-KEY"
     chat_tab = "CHAT_TAB"
+    query = "QUERY"
 
     database_annotation = "DB-ANNO"
     table_annotation = "TBL-ANNO"
