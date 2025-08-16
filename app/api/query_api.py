@@ -33,3 +33,20 @@ def execution(
     if not result.is_successful:
         raise APIException(result.code)
     return ResponseMessage.success(value=result.data, code=result.code)
+
+
+@router.get(
+    "/find/{chat_tab_id}",
+    response_model=ResponseMessage[dict],
+    summary="쿼리 실행 내역 조회",
+)
+def find_query_history(
+    chat_tab_id: str,
+    service: QueryService = query_service_dependency,
+) -> ResponseMessage[dict]:
+
+    result = service.find_query_history(chat_tab_id)
+
+    if not result.is_successful:
+        raise APIException(result.code)
+    return ResponseMessage.success(value=result.data, code=result.code)

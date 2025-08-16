@@ -11,6 +11,7 @@ from app.schemas.query.result_model import (
     ExecutionResult,
     ExecutionSelectResult,
     InsertLocalDBResult,
+    SelectQueryHistoryResult,
 )
 
 
@@ -76,6 +77,43 @@ class QueryRepository:
             raise APIException(CommonCode.FAIL_CONNECT_DB) from e
         except Exception as e:
             raise APIException(CommonCode.FAIL_CREATE_QUERY) from e
+        finally:
+            if connection:
+                connection.close()
+
+    def find_query_history(self, chat_tab_id: int) -> SelectQueryHistoryResult:
+        """
+        전달받은 쿼리를 실행하여 모든 DB 연결 정보를 조회합니다.
+        """
+        db_path = get_db_path()
+        connection = None
+        try:
+            connection = sqlite3.connect(db_path)
+            connection.row_factory = sqlite3.Row
+            cursor = connection.cursor()
+
+            sql = """
+                SELECT qh.*
+                FROM query_history AS qh
+                LEFT JOIN chat_message AS cm ON qh.chat_message_id = cm.id
+                WHERE cm.chat_tab_id = ?
+                ORDER BY qh.created_at DESC
+                LIMIT 5;
+            """
+            data = (chat_tab_id,)
+
+            cursor.execute(sql, data)
+            rows = cursor.fetchall()
+
+            columns = [desc[0] for desc in cursor.description]
+            data = [dict(zip(columns, row, strict=False)) for row in rows]
+            result = {"columns": columns, "data": data}
+
+            return SelectQueryHistoryResult(is_successful=True, code=CommonCode.SUCCESS_FIND_QUERY_HISTORY, data=result)
+        except sqlite3.Error:
+            return SelectQueryHistoryResult(is_successful=False, code=CommonCode.FAIL_CONNECT_DB)
+        except Exception:
+            return SelectQueryHistoryResult(is_successful=False, code=CommonCode.FAIL)
         finally:
             if connection:
                 connection.close()

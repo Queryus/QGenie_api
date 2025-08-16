@@ -15,6 +15,7 @@ from app.schemas.query.result_model import (
     BasicResult,
     ExecutionResult,
     ExecutionSelectResult,
+    SelectQueryHistoryResult,
 )
 from app.schemas.user_db.db_profile_model import AllDBProfileInfo, DBProfileInfo
 
@@ -38,6 +39,17 @@ class QueryService:
         except Exception as e:
             raise APIException(CommonCode.FAIL) from e
         return result
+
+    def find_query_history(
+        self, chat_tab_id: int, repository: QueryRepository = query_repository
+    ) -> SelectQueryHistoryResult:
+        """
+        쿼리 기록을 조회합니다.
+        """
+        try:
+            return repository.find_query_history(chat_tab_id)
+        except Exception as e:
+            raise APIException(CommonCode.FAIL) from e
 
     def _get_driver_module(self, db_type: str):
         """
