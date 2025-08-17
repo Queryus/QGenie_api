@@ -188,7 +188,7 @@ class UserDbRepository:
             if "%s" in table_query or "?" in table_query:
                 cursor.execute(table_query, (schema_name,))
             elif ":owner" in table_query:
-                cursor.execute(table_query, {"owner": schema_name})
+                cursor.execute(table_query, {"owner": schema_name.upper()})
             else:
                 cursor.execute(table_query)
 
@@ -216,6 +216,13 @@ class UserDbRepository:
                 columns = self._find_columns_for_sqlite(cursor, table_name)
             elif db_type == DBTypesEnum.postgresql.name:
                 columns = self._find_columns_for_postgresql(cursor, schema_name, table_name)
+            elif db_type == DBTypesEnum.oracle.name:
+                columns = self._find_columns_for_oracle(cursor, schema_name, table_name)
+            elif db_type == DBTypesEnum.mysql.name:
+                pass
+            elif db_type == DBTypesEnum.mariadb.name:
+                pass
+
             else:
                 columns = self._find_columns_for_general(cursor, column_query, schema_name, table_name)
 
@@ -290,6 +297,87 @@ class UserDbRepository:
             for c in columns_raw
         ]
 
+    def _find_columns_for_oracle(self, cursor: Any, schema_name: str, table_name: str) -> list[ColumnInfo]:
+        sql = """
+            SELECT
+                c.column_name,
+                c.data_type,
+                c.nullable,
+                c.data_default,
+                cc.comments,
+                CASE WHEN cons.constraint_type = 'P' THEN 1 ELSE 0 END AS is_pk,
+                c.data_length,
+                c.data_precision,
+                c.data_scale,
+                c.column_id as ordinal_position
+            FROM
+                all_tab_columns c
+            LEFT JOIN
+                all_col_comments cc ON c.owner = cc.owner AND c.table_name = cc.table_name AND c.column_name = cc.column_name
+            LEFT JOIN
+                (
+                    SELECT
+                        acc.owner,
+                        acc.table_name,
+                        acc.column_name,
+                        ac.constraint_type
+                    FROM
+                        all_constraints ac
+                    JOIN
+                        all_cons_columns acc ON ac.owner = acc.owner AND ac.constraint_name = acc.constraint_name
+                    WHERE
+                        ac.constraint_type = 'P'
+                ) cons ON c.owner = cons.owner AND c.table_name = cons.table_name AND c.column_name = cons.column_name
+            WHERE
+                c.owner = :owner AND c.table_name = :table
+            ORDER BY
+                c.column_id
+        """
+        cursor.execute(sql, {"owner": schema_name.upper(), "table": table_name.upper()})
+        columns_raw = cursor.fetchall()
+        columns = []
+        for c in columns_raw:
+            (
+                name,
+                data_type,
+                nullable,
+                default,
+                comment,
+                is_pk,
+                length,
+                precision,
+                scale,
+                ordinal_position,
+            ) = c
+
+            if data_type in ["VARCHAR2", "NVARCHAR2", "CHAR", "RAW"]:
+                full_type = f"{data_type}({length})"
+            elif data_type == "NUMBER":
+                if precision is not None and scale is not None:
+                    if precision == 38 and scale == 0:
+                        full_type = "NUMBER"
+                    else:
+                        full_type = f"NUMBER({precision}, {scale})"
+                elif precision is not None:
+                    full_type = f"NUMBER({precision})"
+                else:
+                    full_type = "NUMBER"
+            else:
+                full_type = data_type
+
+            columns.append(
+                ColumnInfo(
+                    name=name,
+                    type=full_type,
+                    nullable=(nullable == "Y"),
+                    default=str(default).strip() if default is not None else None,
+                    comment=comment,
+                    is_pk=bool(is_pk),
+                    ordinal_position=ordinal_position,
+                )
+            )
+        return columns
+
     def _find_columns_for_general(
         self, cursor: Any, column_query: str, schema_name: str, table_name: str
     ) -> list[ColumnInfo]:
@@ -334,7 +422,7 @@ class UserDbRepository:
     ) -> list[ConstraintInfo]:
         """
         테이블의 제약 조건 정보를 조회합니다.
-        - 현재는 SQLite, PostgreSQL만 지원합니다.
+        - SQLite, PostgreSQL, Oracle을 지원합니다.
         - 실패 시 DB 드라이버의 예외를 직접 발생시킵니다.
         """
         connection = None
@@ -346,7 +434,8 @@ class UserDbRepository:
                 return self._find_constraints_for_sqlite(cursor, table_name)
             elif db_type == DBTypesEnum.postgresql.name:
                 return self._find_constraints_for_postgresql(cursor, schema_name, table_name)
-            # elif db_type == ...:
+            elif db_type == DBTypesEnum.oracle.name:
+                return self._find_constraints_for_oracle(cursor, schema_name, table_name)
             return []
         finally:
             if connection:
@@ -444,6 +533,79 @@ class UserDbRepository:
             for name, data in constraint_map.items()
         ]
 
+    def _find_constraints_for_oracle(self, cursor: Any, schema_name: str, table_name: str) -> list[ConstraintInfo]:
+        sql = """
+            SELECT
+                ac.constraint_name,
+                ac.constraint_type,
+                acc.column_name,
+                ac.search_condition,
+                r_ac.table_name AS referenced_table,
+                r_acc.column_name AS referenced_column,
+                ac.delete_rule
+            FROM
+                all_constraints ac
+            JOIN
+                all_cons_columns acc ON ac.owner = acc.owner AND ac.constraint_name = acc.constraint_name AND ac.table_name = acc.table_name
+            LEFT JOIN
+                all_constraints r_ac ON ac.r_owner = r_ac.owner AND ac.r_constraint_name = r_ac.constraint_name
+            LEFT JOIN
+                all_cons_columns r_acc ON ac.r_owner = r_acc.owner AND ac.r_constraint_name = r_acc.constraint_name AND acc.position = r_acc.position
+            WHERE
+                ac.owner = :owner AND ac.table_name = :table
+            ORDER BY
+                ac.constraint_name, acc.position
+        """
+        cursor.execute(sql, {"owner": schema_name.upper(), "table": table_name.upper()})
+        raw_constraints = cursor.fetchall()
+
+        constraint_map = {}
+        for row in raw_constraints:
+            name, const_type_char, column, check_expr, ref_table, ref_column, on_delete = row
+
+            const_type_map = {"P": "PRIMARY KEY", "R": "FOREIGN KEY", "U": "UNIQUE", "C": "CHECK"}
+            const_type = const_type_map.get(const_type_char)
+
+            if not const_type:
+                continue
+
+            if const_type == "CHECK":
+                check_expr_str = (str(check_expr) if check_expr else "").upper()
+                # "COL" IS NOT NULL 또는 COL IS NOT NULL 형식 모두 처리
+                if (
+                    f'"{column.upper()}" IS NOT NULL' in check_expr_str
+                    or f"{column.upper()} IS NOT NULL" in check_expr_str
+                ):
+                    continue
+
+            if name not in constraint_map:
+                constraint_map[name] = {
+                    "type": const_type,
+                    "columns": [],
+                    "referenced_table": ref_table,
+                    "referenced_columns": [],
+                    "check_expression": check_expr if const_type == "CHECK" else None,
+                    "on_delete": on_delete if const_type == "FOREIGN KEY" else None,
+                }
+
+            if column and column not in constraint_map[name]["columns"]:
+                constraint_map[name]["columns"].append(column)
+            if ref_column and ref_column not in constraint_map[name]["referenced_columns"]:
+                constraint_map[name]["referenced_columns"].append(ref_column)
+
+        return [
+            ConstraintInfo(
+                name=name,
+                type=data["type"],
+                columns=data["columns"],
+                referenced_table=data["referenced_table"],
+                referenced_columns=data["referenced_columns"] if data["referenced_columns"] else None,
+                check_expression=data["check_expression"],
+                on_delete=data["on_delete"],
+            )
+            for name, data in constraint_map.items()
+        ]
+
     def find_indexes(
         self, driver_module: Any, db_type: str, schema_name: str, table_name: str, **kwargs: Any
     ) -> list[IndexInfo]:
@@ -460,7 +622,8 @@ class UserDbRepository:
                 return self._find_indexes_for_sqlite(cursor, table_name)
             elif db_type == DBTypesEnum.postgresql.name:
                 return self._find_indexes_for_postgresql(cursor, schema_name, table_name)
-            # elif db_type == ...:
+            elif db_type == DBTypesEnum.oracle.name:
+                return self._find_indexes_for_oracle(cursor, schema_name, table_name)
             return []
         finally:
             if connection:
@@ -530,6 +693,40 @@ class UserDbRepository:
             for name, data in index_map.items()
         ]
 
+    def _find_indexes_for_oracle(self, cursor: Any, schema_name: str, table_name: str) -> list[IndexInfo]:
+        sql = """
+            SELECT
+                i.index_name,
+                i.uniqueness,
+                ic.column_name
+            FROM
+                all_indexes i
+            JOIN
+                all_ind_columns ic ON i.owner = ic.index_owner AND i.index_name = ic.index_name
+            LEFT JOIN
+                all_constraints ac ON i.owner = ac.owner AND i.index_name = ac.constraint_name AND ac.constraint_type = 'P'
+            WHERE
+                i.table_owner = :owner
+                AND i.table_name = :table
+                AND ac.constraint_name IS NULL
+            ORDER BY
+                i.index_name, ic.column_position
+        """
+        cursor.execute(sql, {"owner": schema_name.upper(), "table": table_name.upper()})
+        raw_indexes = cursor.fetchall()
+
+        index_map = {}
+        for row in raw_indexes:
+            index_name, uniqueness, column_name = row
+            if index_name not in index_map:
+                index_map[index_name] = {"columns": [], "is_unique": uniqueness == "UNIQUE"}
+            index_map[index_name]["columns"].append(column_name)
+
+        return [
+            IndexInfo(name=name, columns=data["columns"], is_unique=data["is_unique"])
+            for name, data in index_map.items()
+        ]
+
     def find_sample_rows(
         self, driver_module: Any, db_type: str, schema_name: str, table_names: list[str], **kwargs: Any
     ) -> dict[str, list[dict[str, Any]]]:
@@ -546,7 +743,8 @@ class UserDbRepository:
                 return self._find_sample_rows_for_sqlite(cursor, table_names)
             elif db_type == DBTypesEnum.postgresql.name:
                 return self._find_sample_rows_for_postgresql(cursor, schema_name, table_names)
-            # elif db_type == ...:
+            elif db_type == DBTypesEnum.oracle.name:
+                return self._find_sample_rows_for_oracle(cursor, schema_name, table_names)
             return {table_name: [] for table_name in table_names}
         finally:
             if connection:
@@ -576,6 +774,21 @@ class UserDbRepository:
             try:
                 # PostgreSQL은 cursor.description을 통해 컬럼명을 바로 얻을 수 있음
                 cursor.execute(f'SELECT * FROM "{schema_name}"."{table_name}" LIMIT 3')
+                columns = [desc[0] for desc in cursor.description]
+                rows = cursor.fetchall()
+                sample_rows_map[table_name] = [dict(zip(columns, row, strict=False)) for row in rows]
+            except Exception:
+                sample_rows_map[table_name] = []
+        return sample_rows_map
+
+    def _find_sample_rows_for_oracle(
+        self, cursor: Any, schema_name: str, table_names: list[str]
+    ) -> dict[str, list[dict[str, Any]]]:
+        sample_rows_map = {}
+        for table_name in table_names:
+            try:
+                query = f'SELECT * FROM "{schema_name.upper()}"."{table_name.upper()}" FETCH FIRST 3 ROWS ONLY'
+                cursor.execute(query)
                 columns = [desc[0] for desc in cursor.description]
                 rows = cursor.fetchall()
                 sample_rows_map[table_name] = [dict(zip(columns, row, strict=False)) for row in rows]

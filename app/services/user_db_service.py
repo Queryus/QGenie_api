@@ -217,12 +217,15 @@ class UserDbService:
                         constraints = repository.find_constraints(
                             driver_module, db_info.type, schema_name, table_name, **connect_kwargs
                         )
+                    except (sqlite3.Error, self._get_driver_module(db_info.type).DatabaseError) as e:
+                        raise APIException(CommonCode.FAIL_FIND_CONSTRAINTS) from e
+
+                    try:
                         indexes = repository.find_indexes(
                             driver_module, db_info.type, schema_name, table_name, **connect_kwargs
                         )
-                    except (sqlite3.Error, self._get_driver_module(db_info.type).Error) as e:
-                        # 레포지토리에서 발생한 DB 예외를 서비스에서 처리
-                        raise APIException(CommonCode.FAIL_FIND_CONSTRAINTS_OR_INDEXES) from e
+                    except (sqlite3.Error, self._get_driver_module(db_info.type).DatabaseError) as e:
+                        raise APIException(CommonCode.FAIL_FIND_INDEXES) from e
 
                     table_info = TableInfo(
                         name=table_name,
@@ -316,7 +319,7 @@ class UserDbService:
         elif db_type in ["mysql", "mariadb"]:
             return "SELECT schema_name FROM information_schema.schemata"
         elif db_type == "oracle":
-            return "SELECT username FROM all_users"
+            return "SELECT username FROM all_users WHERE ORACLE_MAINTAINED = 'N'"
         elif db_type == "sqlite":
             return None
         return None
@@ -393,12 +396,6 @@ class UserDbService:
                 SELECT column_name, data_type, is_nullable, column_default, table_name, table_schema
                 FROM information_schema.columns
                 WHERE table_schema = %s AND table_name = %s
-            """
-        elif db_type == "oracle":
-            return """
-                SELECT column_name, data_type, nullable, data_default, table_name
-                FROM all_tab_columns
-                WHERE owner = :owner AND table_name = :table
             """
         elif db_type == "sqlite":
             return None

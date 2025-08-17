@@ -129,6 +129,12 @@ class CommonCode(Enum):
         "5105",
         "디비 제약조건 또는 인덱스 정보 조회 중 에러가 발생했습니다.",
     )
+    FAIL_FIND_CONSTRAINTS = (
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "5107",
+        "디비 제약조건 정보 조회 중 에러가 발생했습니다.",
+    )
+    FAIL_FIND_INDEXES = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5108", "디비 인덱스 정보 조회 중 에러가 발생했습니다.")
     FAIL_FIND_SAMPLE_ROWS = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5106", "샘플 데이터 조회 중 에러가 발생했습니다.")
     FAIL_SAVE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5130", "디비 정보 저장 중 에러가 발생했습니다.")
     FAIL_UPDATE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5150", "디비 정보 업데이트 중 에러가 발생했습니다.")
