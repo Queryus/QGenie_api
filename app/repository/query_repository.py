@@ -11,6 +11,7 @@ from app.schemas.query.result_model import (
     ExecutionResult,
     ExecutionSelectResult,
     InsertLocalDBResult,
+    QueryTestResult,
     SelectQueryHistoryResult,
 )
 
@@ -51,6 +52,32 @@ class QueryRepository:
             return BasicResult(is_successful=False, code=CommonCode.FAIL_CONNECT_DB)
         except Exception:
             return BasicResult(is_successful=False, code=CommonCode.FAIL)
+        finally:
+            if connection:
+                connection.close()
+
+    def execution_test(
+        self,
+        query: str,
+        driver_module: Any,
+        **kwargs: Any,
+    ) -> QueryTestResult:
+        """
+        쿼리가 문법적으로 유효한지 테스트합니다.
+        실제 데이터는 변경되지 않습니다. (모든 작업은 롤백됩니다).
+        """
+        connection = None
+        try:
+            connection = self._connect(driver_module, **kwargs)
+            cursor = connection.cursor()
+            cursor.execute(query)
+
+            connection.rollback()
+            return QueryTestResult(is_successful=True, code=CommonCode.SUCCESS_EXECUTION_TEST, data=True)
+        except (AttributeError, driver_module.OperationalError, driver_module.DatabaseError):
+            return QueryTestResult(is_successful=False, code=CommonCode.FAIL_CONNECT_DB, data=False)
+        except Exception:
+            return QueryTestResult(is_successful=False, code=CommonCode.FAIL, data=False)
         finally:
             if connection:
                 connection.close()

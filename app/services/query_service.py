@@ -10,11 +10,12 @@ from app.core.enum.db_driver import DBTypesEnum
 from app.core.exceptions import APIException
 from app.core.status import CommonCode
 from app.repository.query_repository import QueryRepository, query_repository
-from app.schemas.query.query_model import ExecutionQuery, QueryInfo
+from app.schemas.query.query_model import ExecutionQuery, QueryInfo, RequestExecutionQuery
 from app.schemas.query.result_model import (
     BasicResult,
     ExecutionResult,
     ExecutionSelectResult,
+    QueryTestResult,
     SelectQueryHistoryResult,
 )
 from app.schemas.user_db.db_profile_model import AllDBProfileInfo, DBProfileInfo
@@ -24,7 +25,10 @@ query_repository_dependency = Depends(lambda: query_repository)
 
 class QueryService:
     def execution(
-        self, query_info: QueryInfo, db_info: AllDBProfileInfo, repository: QueryRepository = query_repository
+        self,
+        query_info: RequestExecutionQuery,
+        db_info: AllDBProfileInfo,
+        repository: QueryRepository = query_repository,
     ) -> ExecutionSelectResult | ExecutionResult | BasicResult:
         """
         쿼리 수행 후 결과를 저장합니다.
@@ -39,6 +43,16 @@ class QueryService:
         except Exception as e:
             raise APIException(CommonCode.FAIL) from e
         return result
+
+    def execution_test(
+        self, query_info: QueryInfo, db_info: AllDBProfileInfo, repository: QueryRepository = query_repository
+    ) -> QueryTestResult:
+        """
+        쿼리 수행 후 결과를 저장합니다.
+        """
+        driver_module = self._get_driver_module(db_info.type)
+        connect_kwargs = self._prepare_connection_args(db_info, query_info.database)
+        return repository.execution_test(query_info.query_text, driver_module, **connect_kwargs)
 
     def find_query_history(
         self, chat_tab_id: int, repository: QueryRepository = query_repository
