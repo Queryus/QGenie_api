@@ -191,10 +191,15 @@ class UserDbService:
             if not schemas_result.is_successful:
                 raise APIException(schemas_result.code)
 
+            # 현재 접속한 사용자 스키마를 명시적으로 추가
+            schemas_to_scan = set(schemas_result.schemas)
+            if db_info.username:
+                schemas_to_scan.add(db_info.username.upper())
+
             full_schema_info = []
 
             # 2. 각 스키마의 모든 테이블 목록 조회
-            for schema_name in schemas_result.schemas:
+            for schema_name in schemas_to_scan:
                 tables_result = repository.find_tables(
                     driver_module, self._get_table_query(db_info.type), schema_name, **connect_kwargs
                 )
