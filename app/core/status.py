@@ -48,6 +48,7 @@ class CommonCode(Enum):
     """ SQL 성공 코드 - 25xx """
     SUCCESS_EXECUTION = (status.HTTP_201_CREATED, "2400", "쿼리를 성공적으로 수행하였습니다.")
     SUCCESS_FIND_QUERY_HISTORY = (status.HTTP_200_OK, "2102", "쿼리 이력 조회를 성공하였습니다.")
+    SUCCESS_EXECUTION_TEST = (status.HTTP_201_CREATED, "2400", "쿼리 TEST를 성공적으로 수행하였습니다.")
 
     # =======================================
     #    클라이언트 에러 (Client Error) - 4xxx
