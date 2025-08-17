@@ -33,3 +33,9 @@ class SelectQueryHistoryResult(BasicResult):
     """DB 결과를 위한 확장 모델"""
 
     data: dict = Field(..., description="쿼리 이력 조회")
+
+
+class QueryTestResult(BasicResult):
+    """DB Test 결과를 위한 확장 모델"""
+
+    data: bool = Field(..., description="쿼리 수행 결과")
