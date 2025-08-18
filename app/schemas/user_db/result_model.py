@@ -30,6 +30,7 @@ class DBProfile(BaseModel):
     name: str | None
     username: str | None
     view_name: str | None
+    annotation_id: str | None = None
     created_at: datetime
     updated_at: datetime
 

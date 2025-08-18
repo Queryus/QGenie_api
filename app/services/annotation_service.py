@@ -61,7 +61,7 @@ class AnnotationService:
         1. DB 프로필, 전체 스키마 정보, 샘플 데이터 조회
         2. AI 서버에 요청할 데이터 모델 생성
         3. TODO: AI 서버에 요청 (현재는 Mock 데이터 사용)
-        4. 트랜잭션 내에서 전체 어노테이션 정보 저장
+        4. 트랜잭션 내에서 전체 어노테이션 정보 저장 및 DB 프로필 업데이트
         """
         try:
             request.validate()
@@ -80,7 +80,7 @@ class AnnotationService:
         # 3. AI 서버에 요청 (현재는 Mock 데이터 사용)
         ai_response = await self._request_annotation_to_ai_server(ai_request_body)
 
-        # 4. 트랜잭션 내에서 전체 어노테이션 정보 저장
+        # 4. 트랜잭션 내에서 전체 어노테이션 정보 저장 및 DB 프로필 업데이트
         db_path = get_db_path()
         conn = None
         try:
@@ -92,8 +92,12 @@ class AnnotationService:
             )
             self.repository.create_full_annotation(db_conn=conn, **db_models)
 
-            conn.commit()
             annotation_id = db_models["db_annotation"].id
+            self.repository.update_db_profile_annotation_id(
+                db_conn=conn, db_profile_id=request.db_profile_id, annotation_id=annotation_id
+            )
+
+            conn.commit()
 
         except sqlite3.Error as e:
             if conn:
@@ -104,6 +108,16 @@ class AnnotationService:
                 conn.close()
 
         return self.get_full_annotation(annotation_id)
+
+    def get_annotation_by_db_profile_id(self, db_profile_id: str) -> FullAnnotationResponse:
+        """
+        db_profile_id를 기반으로 완전한 어노테이션 정보를 조회합니다.
+        """
+        db_profile = self.user_db_service.find_profile(db_profile_id)
+        if not db_profile.annotation_id:
+            raise APIException(CommonCode.NO_ANNOTATION_FOR_PROFILE)
+
+        return self.get_full_annotation(db_profile.annotation_id)
 
     def _prepare_ai_request_body(
         self,

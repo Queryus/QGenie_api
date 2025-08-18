@@ -43,6 +43,22 @@ def get_annotation(
     return ResponseMessage.success(value=annotation, code=CommonCode.SUCCESS_FIND_ANNOTATION)
 
 
+@router.get(
+    "/find/db/{db_profile_id}",
+    response_model=ResponseMessage[FullAnnotationResponse],
+    summary="DB 프로필 ID로 어노테이션 조회",
+)
+def get_annotation_by_db_profile_id(
+    db_profile_id: str,
+    service: AnnotationService = annotation_service_dependency,
+) -> ResponseMessage[FullAnnotationResponse]:
+    """
+    `db_profile_id`에 연결된 어노테이션의 전체 상세 정보를 조회합니다.
+    """
+    annotation = service.get_annotation_by_db_profile_id(db_profile_id)
+    return ResponseMessage.success(value=annotation, code=CommonCode.SUCCESS_FIND_ANNOTATION)
+
+
 @router.delete(
     "/remove/{annotation_id}",
     response_model=ResponseMessage[AnnotationDeleteResponse],

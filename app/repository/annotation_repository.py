@@ -161,6 +161,20 @@ class AnnotationRepository:
             index_column_data,
         )
 
+    def update_db_profile_annotation_id(
+        self, db_conn: sqlite3.Connection, db_profile_id: str, annotation_id: str
+    ) -> None:
+        """
+        주어진 db_profile_id에 해당하는 레코드의 annotation_id를 업데이트합니다.
+        - 서비스 계층에서 트랜잭션을 관리하므로 connection을 인자로 받습니다.
+        - 실패 시 sqlite3.Error를 발생시킵니다.
+        """
+        cursor = db_conn.cursor()
+        cursor.execute(
+            "UPDATE db_profile SET annotation_id = ? WHERE id = ?",
+            (annotation_id, db_profile_id),
+        )
+
     def find_full_annotation_by_id(self, annotation_id: str) -> FullAnnotationResponse | None:
         """
         annotationId로 전체 어노테이션 상세 정보를 조회합니다.
