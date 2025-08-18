@@ -4,6 +4,7 @@ from app.core.enum.llm_service_info import LLMServiceEnum
 from app.core.response import ResponseMessage
 from app.core.status import CommonCode
 from app.schemas.api_key.create_model import APIKeyCreate
+from app.schemas.api_key.decrypted_response_model import DecryptedAPIKeyResponse
 from app.schemas.api_key.response_model import APIKeyResponse
 from app.schemas.api_key.update_model import APIKeyUpdate
 from app.services.api_key_service import APIKeyService, api_key_service
@@ -31,7 +32,6 @@ def store_api_key(
     response_data = APIKeyResponse(
         id=created_api_key.id,
         service_name=created_api_key.service_name.value,
-        api_key_encrypted=created_api_key.api_key,
         created_at=created_api_key.created_at,
         updated_at=created_api_key.updated_at,
     )
@@ -84,6 +84,21 @@ def get_api_key_by_service_name(
         updated_at=api_key_in_db.updated_at,
     )
     return ResponseMessage.success(value=response_data, code=CommonCode.SUCCESS_GET_API_KEY)
+
+
+@router.get(
+    "/internal/decrypted/{serviceName}",
+    response_model=ResponseMessage[DecryptedAPIKeyResponse],
+    summary="[내부용] 복호화된 API KEY 조회",
+    description="내부 AI 서버와 같이, 신뢰된 서비스가 복호화된 API 키를 요청할 때 사용합니다. (외부 노출 금지)",
+    # include_in_schema=False,  # Swagger 문서에 포함하지 않음
+)
+def get_decrypted_api_key(
+    serviceName: LLMServiceEnum, service: APIKeyService = api_key_service_dependency
+) -> ResponseMessage[DecryptedAPIKeyResponse]:
+    """서비스 이름을 기준으로 API Key를 복호화하여 반환합니다."""
+    decrypted_key = service.get_decrypted_api_key(serviceName.value)
+    return ResponseMessage.success(value=DecryptedAPIKeyResponse(api_key=decrypted_key))
 
 
 @router.put(

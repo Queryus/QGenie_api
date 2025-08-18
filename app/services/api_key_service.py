@@ -61,6 +61,16 @@ class APIKeyService:
         except sqlite3.Error as e:
             raise APIException(CommonCode.FAIL) from e
 
+    def get_decrypted_api_key(self, service_name: str) -> str:
+        """서비스 이름으로 암호화된 API Key를 조회하고 복호화하여 반환합니다."""
+        api_key_in_db = self.get_api_key_by_service_name(service_name)
+        try:
+            decrypted_key = AES256.decrypt(api_key_in_db.api_key)
+            return decrypted_key
+        except Exception as e:
+            # 복호화 실패 시 서버 에러 발생
+            raise APIException(CommonCode.FAIL_DECRYPT_API_KEY) from e
+
     def update_api_key(self, service_name: str, key_data: APIKeyUpdate) -> APIKeyInDB:
         """서비스 이름에 해당하는 API Key를 수정합니다."""
         key_data.validate_with_api_key()
