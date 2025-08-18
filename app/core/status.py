@@ -33,7 +33,7 @@ class CommonCode(Enum):
     SUCCESS_UPDATE_API_KEY = (status.HTTP_200_OK, "2201", "API KEY가 성공적으로 수정되었습니다.")
     SUCCESS_GET_API_KEY = (status.HTTP_200_OK, "2202", "API KEY 정보를 성공적으로 조회했습니다.")
 
-    """ AI CHAT, DB 성공 코드 - 23xx """
+    """ CHAT TAB 성공 코드 - 23xx """
     SUCCESS_CHAT_TAB_CREATE = (status.HTTP_200_OK, "2300", "새로운 채팅 탭이 성공적으로 생성하였습니다.")
     SUCCESS_CHAT_TAB_UPDATE = (status.HTTP_200_OK, "2301", "채팅 탭 이름이 성공적으로 수정되었습니다.")
     SUCCESS_CHAT_TAB_DELETE = (status.HTTP_200_OK, "2302", "채팅 탭을 성공적으로 삭제되었습니다.")
@@ -49,6 +49,9 @@ class CommonCode(Enum):
     SUCCESS_EXECUTION = (status.HTTP_201_CREATED, "2400", "쿼리를 성공적으로 수행하였습니다.")
     SUCCESS_FIND_QUERY_HISTORY = (status.HTTP_200_OK, "2102", "쿼리 이력 조회를 성공하였습니다.")
     SUCCESS_EXECUTION_TEST = (status.HTTP_201_CREATED, "2400", "쿼리 TEST를 성공적으로 수행하였습니다.")
+
+    """ ChAT MESSAGE 성공 코드 - 26xx """
+    SUCCESS_CREATE_CHAT_MESSAGES = (status.HTTP_201_CREATED, "2600", "메시지를 성공적으로 요청하였습니다.")
 
     # =======================================
     #    클라이언트 에러 (Client Error) - 4xxx
@@ -95,6 +98,9 @@ class CommonCode(Enum):
     """ SQL 클라이언트 에러 코드 - 45xx """
     NO_CHAT_KEY = (status.HTTP_400_BAD_REQUEST, "4501", "CHAT 키는 필수 값입니다.")
     NO_QUERY = (status.HTTP_400_BAD_REQUEST, "4500", "쿼리는 필수 값입니다.")
+
+    """ CHAT MESSAGE 에러 코드 - 46xx """
+    INVALID_CHAT_MESSAGE_REQUEST = (status.HTTP_400_BAD_REQUEST, "4600", "AI 채팅 요청 데이터가 유효하지 않습니다.")
 
     # ==================================
     #    서버 에러 (Server Error) - 5xx
@@ -144,7 +150,10 @@ class CommonCode(Enum):
     )
 
     """ SQL 서버 에러 코드 - 55xx """
+
     FAIL_CREATE_QUERY = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5170", "쿼리 실행 정보 저장 중 에러가 발생했습니다.")
+
+    """ CHAT MESSAGE 에러 코드 - 56xx """
 
     def __init__(self, http_status: int, code: str, message: str):
         """Enum 멤버가 생성될 때 각 값을 속성으로 할당합니다."""

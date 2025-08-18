@@ -27,7 +27,6 @@ def execution(
     service: QueryService = query_service_dependency,
     userDbservice: UserDbService = user_db_service_dependency,
 ) -> ResponseMessage[dict | str | None]:
-
     db_info = userDbservice.find_profile(query_info.user_db_id)
     result = service.execution(query_info, db_info)
 
@@ -46,7 +45,6 @@ def execution_test(
     service: QueryService = query_service_dependency,
     userDbservice: UserDbService = user_db_service_dependency,
 ) -> ResponseMessage[Any]:
-
     db_info = userDbservice.find_profile(query_info.user_db_id)
     result = service.execution_test(query_info, db_info)
 
@@ -62,7 +60,6 @@ def find_query_history(
     chat_tab_id: str,
     service: QueryService = query_service_dependency,
 ) -> ResponseMessage[dict]:
-
     result = service.find_query_history(chat_tab_id)
 
     if not result.is_successful:

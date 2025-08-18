@@ -90,7 +90,6 @@ def delete_profile(
 def find_all_profile(
     service: UserDbService = user_db_service_dependency,
 ) -> ResponseMessage[list[DBProfile]]:
-
     result = service.find_all_profile()
 
     if not result.is_successful:
@@ -104,7 +103,6 @@ def find_all_profile(
     summary="특정 DB의 전체 스키마 조회",
 )
 def find_schemas(profile_id: str, service: UserDbService = user_db_service_dependency) -> ResponseMessage[list[str]]:
-
     db_info = service.find_profile(profile_id)
     result = service.find_schemas(db_info)
 
@@ -121,7 +119,6 @@ def find_schemas(profile_id: str, service: UserDbService = user_db_service_depen
 def find_tables(
     profile_id: str, schema_name: str, service: UserDbService = user_db_service_dependency
 ) -> ResponseMessage[list[str]]:
-
     db_info = service.find_profile(profile_id)
     result = service.find_tables(db_info, schema_name)
 
@@ -138,7 +135,6 @@ def find_tables(
 def find_columns(
     profile_id: str, schema_name: str, table_name: str, service: UserDbService = user_db_service_dependency
 ) -> ResponseMessage[list[ColumnInfo]]:
-
     db_info = service.find_profile(profile_id)
     result = service.find_columns(db_info, schema_name, table_name)
 
@@ -156,7 +152,6 @@ def find_columns(
 def find_all_schema_info(
     profile_id: str, service: UserDbService = user_db_service_dependency
 ) -> ResponseMessage[list[TableInfo]]:
-
     db_info = service.find_profile(profile_id)
     full_schema_info = service.get_full_schema_info(db_info)
 
