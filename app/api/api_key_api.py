@@ -98,7 +98,9 @@ def get_decrypted_api_key(
 ) -> ResponseMessage[DecryptedAPIKeyResponse]:
     """서비스 이름을 기준으로 API Key를 복호화하여 반환합니다."""
     decrypted_key = service.get_decrypted_api_key(serviceName.value)
-    return ResponseMessage.success(value=DecryptedAPIKeyResponse(api_key=decrypted_key))
+    return ResponseMessage.success(
+        value=DecryptedAPIKeyResponse(api_key=decrypted_key), code=CommonCode.SUCCESS_GET_API_KEY
+    )
 
 
 @router.put(
