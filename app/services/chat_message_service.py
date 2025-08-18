@@ -1,3 +1,4 @@
+import os
 import sqlite3
 
 import httpx
@@ -15,8 +16,7 @@ from app.schemas.chat_message.response_model import ChatMessagesResponse
 
 chat_message_repository_dependency = Depends(lambda: chat_message_repository)
 
-# AI 서버의 주소
-AI_SERVER_URL = "http://localhost:35816/api/v1/chat"
+AI_SERVER_URL = os.getenv("ENV_AI_SERVER_URL")
 
 
 class ChatMessageService:
