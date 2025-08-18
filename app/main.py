@@ -1,5 +1,4 @@
 # main.py
-# [추가] .env 파일 로드를 위한 모듈 임포트
 import os
 import sys
 
@@ -19,6 +18,10 @@ from app.core.exceptions import (
     validation_exception_handler,
 )
 from app.db.init_db import initialize_database
+
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 
 # 실행 파일 내부에서 assets 폴더 경로를 찾는 로직
