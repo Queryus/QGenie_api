@@ -13,9 +13,6 @@ class ChatTabInDB(ChatTabBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class ChatMessageInDB(ChatTabBase):
     """데이터베이스에 저장된 형태의 메시지 스키마 (내부용)"""
@@ -26,6 +23,3 @@ class ChatMessageInDB(ChatTabBase):
     message: str = Field(..., description="메시지 내용")
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True

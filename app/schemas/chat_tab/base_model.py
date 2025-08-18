@@ -2,6 +2,7 @@ import re
 
 from pydantic import BaseModel, Field
 
+from app.core.enum.db_key_prefix_name import DBSaveIdEnum
 from app.core.exceptions import APIException
 from app.core.status import CommonCode
 
@@ -35,3 +36,11 @@ class ChatTabBase(BaseModel):
         # 특정 특수문자를 검사하는 예시
         if re.search(r"[;\"'`<>]", self.name):
             raise APIException(CommonCode.INVALID_CHAT_TAB_NAME_CONTENT)
+
+    def validate_chat_tab_id(self) -> None:
+        """채팅 탭 ID에 대한 유효성 검증 로직을 수행합니다."""
+
+        # 1. 'CHAT-TAB-' 접두사 검증
+        required_prefix = DBSaveIdEnum.chat_tab.value + "-"
+        if not self.id.startswith(required_prefix):
+            raise APIException(CommonCode.INVALID_CHAT_TAB_ID_FORMAT)

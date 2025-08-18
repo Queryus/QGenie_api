@@ -18,13 +18,13 @@ router = APIRouter()
     summary="새로운 Chat Tab 생성",
     description="새로운 Chat Tab을 생성하여 로컬 데이터베이스에 저장합니다.",
 )
-def store_chat_tab(
+def create_chat_tab(
     chatName: ChatTabBase, service: ChatTabService = chat_tab_service_dependency
 ) -> ResponseMessage[ChatTabResponse]:
     """
     - **name**: 새로운 Chat_tab 이름 (예: "채팅 타이틀")
     """
-    created_chat_tab = service.store_chat_tab(chatName)
+    created_chat_tab = service.create_chat_tab(chatName)
 
     response_data = ChatTabResponse(
         id=created_chat_tab.id,
