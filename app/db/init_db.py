@@ -170,13 +170,17 @@ def initialize_database():
         # --- query_history 테이블 처리 ---
         query_history_cols = {
             "id": "VARCHAR(64) PRIMARY KEY NOT NULL",
+            "user_db_id": "VARCHAR(64) NOT NULL",
             "chat_message_id": "VARCHAR(64) NOT NULL",
+            "database": "VARCHAR(256) NOT NULL",
             "query_text": "TEXT NOT NULL",
-            "is_success": "VARCHAR(1) NOT NULL",
-            "error_message": "TEXT NOT NULL",
+            "type": "VARCHAR(32)",
+            "is_success": "VARCHAR(1)",
+            "error_message": "TEXT",
             "created_at": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
             "updated_at": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP",
             "FOREIGN KEY (chat_message_id)": "REFERENCES chat_message(id) ON DELETE CASCADE",
+            "FOREIGN KEY (user_db_id)": "REFERENCES db_profile(id) ON DELETE CASCADE",
         }
         create_sql = f"CREATE TABLE IF NOT EXISTS query_history ({', '.join([f'{k} {v}' for k, v in query_history_cols.items()])})"
         cursor.execute(create_sql)

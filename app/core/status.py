@@ -46,6 +46,9 @@ class CommonCode(Enum):
     SUCCESS_DELETE_ANNOTATION = (status.HTTP_200_OK, "2402", "어노테이션을 성공적으로 삭제하였습니다.")
 
     """ SQL 성공 코드 - 25xx """
+    SUCCESS_EXECUTION = (status.HTTP_201_CREATED, "2400", "쿼리를 성공적으로 수행하였습니다.")
+    SUCCESS_FIND_QUERY_HISTORY = (status.HTTP_200_OK, "2102", "쿼리 이력 조회를 성공하였습니다.")
+    SUCCESS_EXECUTION_TEST = (status.HTTP_201_CREATED, "2400", "쿼리 TEST를 성공적으로 수행하였습니다.")
 
     # =======================================
     #    클라이언트 에러 (Client Error) - 4xxx
@@ -90,6 +93,8 @@ class CommonCode(Enum):
     NO_ANNOTATION_FOR_PROFILE = (status.HTTP_404_NOT_FOUND, "4401", "해당 DB 프로필에 연결된 어노테이션이 없습니다.")
 
     """ SQL 클라이언트 에러 코드 - 45xx """
+    NO_CHAT_KEY = (status.HTTP_400_BAD_REQUEST, "4501", "CHAT 키는 필수 값입니다.")
+    NO_QUERY = (status.HTTP_400_BAD_REQUEST, "4500", "쿼리는 필수 값입니다.")
 
     # ==================================
     #    서버 에러 (Server Error) - 5xx
@@ -139,6 +144,7 @@ class CommonCode(Enum):
     )
 
     """ SQL 서버 에러 코드 - 55xx """
+    FAIL_CREATE_QUERY = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5170", "쿼리 실행 정보 저장 중 에러가 발생했습니다.")
 
     def __init__(self, http_status: int, code: str, message: str):
         """Enum 멤버가 생성될 때 각 값을 속성으로 할당합니다."""
