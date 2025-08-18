@@ -1,6 +1,8 @@
 # app/api/query_api.py
 
 
+from typing import Any
+
 from fastapi import APIRouter, Depends
 
 from app.core.exceptions import APIException
@@ -36,20 +38,18 @@ def execution(
 
 @router.post(
     "/execute/test",
-    response_model=ResponseMessage[bool],
+    response_model=ResponseMessage[Any],
     summary="쿼리 실행",
 )
 def execution_test(
     query_info: QueryInfo,
     service: QueryService = query_service_dependency,
     userDbservice: UserDbService = user_db_service_dependency,
-) -> ResponseMessage[bool]:
+) -> ResponseMessage[Any]:
 
     db_info = userDbservice.find_profile(query_info.user_db_id)
     result = service.execution_test(query_info, db_info)
 
-    if not result.is_successful:
-        raise APIException(result.code)
     return ResponseMessage.success(value=result.data, code=result.code)
 
 

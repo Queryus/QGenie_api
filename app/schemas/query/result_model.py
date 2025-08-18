@@ -1,5 +1,7 @@
 # app/schemas/user_db/result_model.py
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 from app.core.status import CommonCode
@@ -38,4 +40,4 @@ class SelectQueryHistoryResult(BasicResult):
 class QueryTestResult(BasicResult):
     """DB Test 결과를 위한 확장 모델"""
 
-    data: bool = Field(..., description="쿼리 수행 결과")
+    data: Any = Field(..., description="쿼리 수행 결과")

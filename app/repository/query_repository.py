@@ -72,14 +72,26 @@ class QueryRepository:
             cursor = connection.cursor()
             cursor.execute(query)
 
-            connection.rollback()
-            return QueryTestResult(is_successful=True, code=CommonCode.SUCCESS_EXECUTION_TEST, data=True)
-        except (AttributeError, driver_module.OperationalError, driver_module.DatabaseError):
-            return QueryTestResult(is_successful=False, code=CommonCode.FAIL_CONNECT_DB, data=False)
-        except Exception:
-            return QueryTestResult(is_successful=False, code=CommonCode.FAIL, data=False)
+            if not self._is_select_query(query):
+                return QueryTestResult(is_successful=True, code=CommonCode.SUCCESS_EXECUTION_TEST, data=True)
+
+            rows = cursor.fetchall()
+            if cursor.description:
+                columns = [desc[0] for desc in cursor.description]
+                data = [dict(zip(columns, row, strict=False)) for row in rows]
+            else:
+                columns = []
+                data = []
+
+            result = {"columns": columns, "data": data}
+            return QueryTestResult(is_successful=True, code=CommonCode.SUCCESS_EXECUTION, data=result)
+        except (AttributeError, driver_module.OperationalError, driver_module.DatabaseError) as e:
+            return QueryTestResult(is_successful=False, code=CommonCode.FAIL_CONNECT_DB, data=str(e))
+        except Exception as e:
+            return QueryTestResult(is_successful=False, code=CommonCode.FAIL, data=str(e))
         finally:
             if connection:
+                connection.rollback()
                 connection.close()
 
     def create_query_history(
