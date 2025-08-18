@@ -1,11 +1,17 @@
 # main.py
+# [추가] .env 파일 로드를 위한 모듈 임포트
+import os
+import sys
 
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api import health_api
 from app.api.api_router import api_router
+from app.core.all_logging import log_requests_middleware
 from app.core.exceptions import (
     APIException,
     api_exception_handler,
@@ -14,8 +20,23 @@ from app.core.exceptions import (
 )
 from app.db.init_db import initialize_database
 
-from starlette.middleware.base import BaseHTTPMiddleware
-from app.core.all_logging import log_requests_middleware
+
+# 실행 파일 내부에서 assets 폴더 경로를 찾는 로직
+def resource_path(relative_path: str) -> str:
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, relative_path)
+
+
+# 애플리케이션 시작 전 .env 파일 로드
+env_path = resource_path("assets/.env")
+if os.path.exists(env_path):
+    load_dotenv(dotenv_path=env_path)
+    print(f".env 파일을 성공적으로 로드했습니다: {env_path}")
+else:
+    print(f"경고: .env 파일을 찾을 수 없습니다. ({env_path})")
 
 app = FastAPI()
 

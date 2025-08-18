@@ -50,7 +50,7 @@ build/
 *.egg-info/
 
 # 환경 변수 파일 (보안 이슈)
-.env                 # 환경 변수 파일
+app/assets/.env
 .env.*
 
 # Jupyter Notebook 체크포인트 (혹시 사용 시)
