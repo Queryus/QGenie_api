@@ -87,7 +87,7 @@ def get_api_key_by_service_name(
 
 
 @router.get(
-    "/internal/decrypted/{serviceName}",
+    "/find/decrypted/{serviceName}",
     response_model=ResponseMessage[DecryptedAPIKeyResponse],
     summary="[내부용] 복호화된 API KEY 조회",
     description="내부 AI 서버와 같이, 신뢰된 서비스가 복호화된 API 키를 요청할 때 사용합니다. (외부 노출 금지)",
