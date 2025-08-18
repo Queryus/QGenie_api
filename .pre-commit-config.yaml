@@ -2,7 +2,7 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "v0.12.2" # ruff 버전에 맞게 수정
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: ["--fix"] # 자동 수정 적용
 
   - repo: https://github.com/psf/black

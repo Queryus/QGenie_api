@@ -1,16 +1,17 @@
 # .github/workflows/build_release_and_notify.yml
-
 name: Build and Deploy Executables
 
 on:
   release:
     types: [published] # Release가 'published' 상태가 될 때 트리거
+  workflow_dispatch:
 
 jobs:
   # ==================================
   #    파이프라인 시작 알림
   # ==================================
   start:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
       - name: Send Pipeline Start Notification
@@ -28,7 +29,6 @@ jobs:
   #    실행 파일 빌드
   # ==================================
   build:
-    needs: start
     strategy:
       matrix:
         os: [macos-latest, windows-latest]
@@ -75,6 +75,8 @@ jobs:
       # 6. PyInstaller를 사용해 파이썬 코드를 실행 파일로 만듭니다.
       - name: Build executable with PyInstaller
         shell: bash
+        env:
+          ENV_AES256_KEY: ${{ secrets.ENV_AES256_KEY }}
         run: poetry run pyinstaller --clean --additional-hooks-dir ./hooks --add-data "app/assets:assets" --onefile --name ${{ env.EXE_NAME }} app/main.py
 
       # 7. 빌드된 실행 파일을 다음 단계(deploy)에서 사용할 수 있도록 아티팩트로 업로드합니다.
@@ -90,6 +92,7 @@ jobs:
   # ==================================
   deploy:
     needs: build
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
 
     steps:
@@ -119,7 +122,7 @@ jobs:
           if git diff-index --quiet HEAD; then
             echo "No changes to commit to QGenie APP repository."
           else
-            git commit -m "feat: API 실행 파일 업데이트 (${{ github.ref_name }})"
+            git commit -m "feat: Update API executable (${{ github.ref_name }})"
             git push
           fi
 
@@ -129,7 +132,7 @@ jobs:
   finish:
     needs: deploy
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && github.event_name == 'release'
 
     steps:
       - name: Send Success Notification

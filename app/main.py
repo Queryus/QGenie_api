@@ -1,39 +1,39 @@
 # main.py
-import os
-import socket  # 소켓 모듈 임포트
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+
+from app.api import health_api
+from app.api.api_router import api_router
+from app.core.exceptions import (
+    APIException,
+    api_exception_handler,
+    generic_exception_handler,
+    validation_exception_handler,
+)
+from app.db.init_db import initialize_database
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from app.core.all_logging import log_requests_middleware
 
 app = FastAPI()
 
+# 전체 로그 찍는 부분
+app.add_middleware(BaseHTTPMiddleware, dispatch=log_requests_middleware)
 
-@app.get("/")
-async def read_root():
-    return {"message": "Hello, FastAPI Backend!"}
+# 전역 예외 처리기 등록
+app.add_exception_handler(Exception, generic_exception_handler)
+app.add_exception_handler(APIException, api_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
+# 라우터
+app.include_router(health_api.router)
+app.include_router(api_router, prefix="/api")
 
-@app.get("/health")
-async def health_check():
-    return {"status": "ok", "message": "Service is healthy"}
+# initialize_database 함수가 호출되어 테이블이 생성되거나 이미 존재함을 확인합니다.
+initialize_database()
 
-
-# 이 부분이 추가된 동적 포트 할당 로직입니다.
 if __name__ == "__main__":
-    # 1. 환경 변수 'PORT'가 있으면 해당 포트를 사용합니다.
-    # 2. 없으면 사용 가능한 임시 포트를 찾습니다.
-    port_from_env = os.getenv("PORT")
-
-    if port_from_env:
-        port = int(port_from_env)
-        print(f"Using port from environment variable: {port}")
-    else:
-        # 시스템에서 사용 가능한 임시 포트를 찾습니다.
-        # 포트 0을 바인딩하면 운영체제가 사용 가능한 포트를 할당해 줍니다.
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(("0.0.0.0", 0))  # 0.0.0.0에 포트 0을 바인딩
-            port = s.getsockname()[1]  # 할당된 포트 번호 가져오기
-            print(f"Dynamically assigned port: {port}")
-
     # Uvicorn 서버를 시작합니다.
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=39722)
