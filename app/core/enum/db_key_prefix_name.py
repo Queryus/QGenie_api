@@ -10,6 +10,7 @@ class DBSaveIdEnum(Enum):
     api_key = "API-KEY"
     chat_tab = "CHAT_TAB"
     query = "QUERY"
+    chat_message = "CHAT_MESSAGE"
 
     database_annotation = "DB-ANNO"
     table_annotation = "TBL-ANNO"
