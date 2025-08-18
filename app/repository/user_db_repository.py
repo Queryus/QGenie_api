@@ -3,6 +3,7 @@ from typing import Any
 
 import oracledb
 
+from app.core.enum.db_driver import DBTypesEnum
 from app.core.exceptions import APIException
 from app.core.status import CommonCode
 from app.core.utils import get_db_path
@@ -209,50 +210,12 @@ class UserDbRepository:
             connection = self._connect(driver_module, **kwargs)
             cursor = connection.cursor()
 
-            if db_type == "sqlite":
-                # SQLite는 PRAGMA를 직접 실행
-                pragma_sql = f"PRAGMA table_info('{table_name}')"
-                cursor.execute(pragma_sql)
-                columns_raw = cursor.fetchall()
-                columns = [
-                    ColumnInfo(
-                        name=c[1],
-                        type=c[2],
-                        nullable=(c[3] == 0),  # notnull == 0 means nullable
-                        default=c[4],
-                        comment=None,
-                        is_pk=(c[5] == 1),
-                    )
-                    for c in columns_raw
-                ]
+            if db_type == DBTypesEnum.sqlite.name:
+                columns = self._find_columns_for_sqlite(cursor, table_name)
+            elif db_type == DBTypesEnum.postgresql.name:
+                columns = self._find_columns_for_postgresql(cursor, schema_name, table_name)
             else:
-                if "%s" in column_query or "?" in column_query:
-                    cursor.execute(column_query, (schema_name, table_name))
-                elif ":owner" in column_query and ":table" in column_query:
-                    owner_bind = schema_name.upper() if schema_name else schema_name
-                    table_bind = table_name.upper() if table_name else table_name
-                    try:
-                        cursor.execute(column_query, {"owner": owner_bind, "table": table_bind})
-                    except Exception:
-                        try:
-                            pos_query = column_query.replace(":owner", ":1").replace(":table", ":2")
-                            cursor.execute(pos_query, [owner_bind, table_bind])
-                        except Exception as e:
-                            raise APIException(CommonCode.FAIL) from e
-                else:
-                    cursor.execute(column_query)
-
-                columns = [
-                    ColumnInfo(
-                        name=c[0],
-                        type=c[1],
-                        nullable=(c[2] in ["YES", "Y", True]),
-                        default=c[3],
-                        comment=c[4] if len(c) > 4 else None,
-                        is_pk=(c[5] in ["PRI", True] if len(c) > 5 else False),
-                    )
-                    for c in cursor.fetchall()
-                ]
+                columns = self._find_columns_for_general(cursor, column_query, schema_name, table_name)
 
             return ColumnListResult(is_successful=True, code=CommonCode.SUCCESS_FIND_COLUMNS, columns=columns)
         except Exception:
@@ -261,93 +224,309 @@ class UserDbRepository:
             if connection:
                 connection.close()
 
+    def _find_columns_for_sqlite(self, cursor: Any, table_name: str) -> list[ColumnInfo]:
+        pragma_sql = f"PRAGMA table_info('{table_name}')"
+        cursor.execute(pragma_sql)
+        columns_raw = cursor.fetchall()
+        # SQLite는 pragma에서 순서(cid)를 반환하지만, ordinal_position은 1부터 시작하는 표준이므로 +1
+        return [
+            ColumnInfo(
+                name=c[1],
+                type=c[2],
+                nullable=(c[3] == 0),
+                default=c[4],
+                comment=None,
+                is_pk=(c[5] == 1),
+                ordinal_position=c[0] + 1,
+            )
+            for c in columns_raw
+        ]
+
+    def _find_columns_for_postgresql(self, cursor: Any, schema_name: str, table_name: str) -> list[ColumnInfo]:
+        sql = """
+            SELECT
+                c.column_name,
+                c.udt_name,
+                c.is_nullable,
+                c.column_default,
+                c.ordinal_position,
+                (SELECT pg_catalog.col_description(cls.oid, c.dtd_identifier::int)
+                 FROM pg_catalog.pg_class cls
+                 JOIN pg_catalog.pg_namespace n ON n.oid = cls.relnamespace
+                 WHERE cls.relname = c.table_name AND n.nspname = c.table_schema) as comment,
+                CASE WHEN kcu.column_name IS NOT NULL THEN TRUE ELSE FALSE END as is_pk
+            FROM
+                information_schema.columns c
+            LEFT JOIN information_schema.key_column_usage kcu
+                ON c.table_schema = kcu.table_schema
+                AND c.table_name = kcu.table_name
+                AND c.column_name = kcu.column_name
+                AND kcu.constraint_name IN (
+                    SELECT constraint_name
+                    FROM information_schema.table_constraints
+                    WHERE table_schema = %s
+                      AND table_name = %s
+                      AND constraint_type = 'PRIMARY KEY'
+                )
+            WHERE
+                c.table_schema = %s AND c.table_name = %s
+            ORDER BY
+                c.ordinal_position;
+        """
+        cursor.execute(sql, (schema_name, table_name, schema_name, table_name))
+        columns_raw = cursor.fetchall()
+        return [
+            ColumnInfo(
+                name=c[0],
+                type=c[1],
+                nullable=(c[2] == "YES"),
+                default=c[3],
+                ordinal_position=c[4],
+                comment=c[5],
+                is_pk=c[6],
+            )
+            for c in columns_raw
+        ]
+
+    def _find_columns_for_general(
+        self, cursor: Any, column_query: str, schema_name: str, table_name: str
+    ) -> list[ColumnInfo]:
+        if "%s" in column_query or "?" in column_query:
+            cursor.execute(column_query, (schema_name, table_name))
+        elif ":owner" in column_query and ":table" in column_query:
+            owner_bind = schema_name.upper() if schema_name else schema_name
+            table_bind = table_name.upper() if table_name else table_name
+            try:
+                cursor.execute(column_query, {"owner": owner_bind, "table": table_bind})
+            except Exception:
+                try:
+                    pos_query = column_query.replace(":owner", ":1").replace(":table", ":2")
+                    cursor.execute(pos_query, [owner_bind, table_bind])
+                except Exception as e:
+                    raise APIException(CommonCode.FAIL) from e
+        else:
+            cursor.execute(column_query)
+
+        columns = []
+        for c in cursor.fetchall():
+            data_type = c[1]
+            if c[6] is not None:
+                data_type = f"{data_type}({c[6]})"
+            elif c[7] is not None and c[8] is not None:
+                data_type = f"{data_type}({c[7]}, {c[8]})"
+
+            columns.append(
+                ColumnInfo(
+                    name=c[0],
+                    type=data_type,
+                    nullable=(c[2] in ["YES", "Y", True]),
+                    default=c[3],
+                    comment=c[4] if len(c) > 4 else None,
+                    is_pk=(c[5] in ["PRI", True] if len(c) > 5 else False),
+                )
+            )
+        return columns
+
     def find_constraints(
-        self, driver_module: Any, db_type: str, table_name: str, **kwargs: Any
+        self, driver_module: Any, db_type: str, schema_name: str, table_name: str, **kwargs: Any
     ) -> list[ConstraintInfo]:
         """
         테이블의 제약 조건 정보를 조회합니다.
-        - 현재는 SQLite만 지원합니다.
+        - 현재는 SQLite, PostgreSQL만 지원합니다.
         - 실패 시 DB 드라이버의 예외를 직접 발생시킵니다.
         """
         connection = None
         try:
             connection = self._connect(driver_module, **kwargs)
             cursor = connection.cursor()
-            constraints = []
 
-            if db_type == "sqlite":
-                # Foreign Key 제약 조건 조회
-                fk_list_sql = f"PRAGMA foreign_key_list('{table_name}')"
-                cursor.execute(fk_list_sql)
-                fks = cursor.fetchall()
-
-                # Foreign Key 정보를 그룹화
-                fk_groups = {}
-                for fk in fks:
-                    fk_id = fk[0]
-                    if fk_id not in fk_groups:
-                        fk_groups[fk_id] = {"referenced_table": fk[2], "columns": [], "referenced_columns": []}
-                    fk_groups[fk_id]["columns"].append(fk[3])
-                    fk_groups[fk_id]["referenced_columns"].append(fk[4])
-
-                for _, group in fk_groups.items():
-                    constraints.append(
-                        ConstraintInfo(
-                            name=f"fk_{table_name}_{'_'.join(group['columns'])}",
-                            type="FOREIGN KEY",
-                            columns=group["columns"],
-                            referenced_table=group["referenced_table"],
-                            referenced_columns=group["referenced_columns"],
-                        )
-                    )
-
-            # 다른 DB 타입에 대한 제약 조건 조회 로직 추가 가능
-            # elif db_type == "postgresql": ...
-
-            return constraints
+            if db_type == DBTypesEnum.sqlite.name:
+                return self._find_constraints_for_sqlite(cursor, table_name)
+            elif db_type == DBTypesEnum.postgresql.name:
+                return self._find_constraints_for_postgresql(cursor, schema_name, table_name)
+            # elif db_type == ...:
+            return []
         finally:
             if connection:
                 connection.close()
 
-    def find_indexes(self, driver_module: Any, db_type: str, table_name: str, **kwargs: Any) -> list[IndexInfo]:
+    def _find_constraints_for_sqlite(self, cursor: Any, table_name: str) -> list[ConstraintInfo]:
+        constraints = []
+        fk_list_sql = f"PRAGMA foreign_key_list('{table_name}')"
+        cursor.execute(fk_list_sql)
+        fks = cursor.fetchall()
+
+        # Foreign Key 정보를 그룹화
+        fk_groups = {}
+        for fk in fks:
+            fk_id = fk[0]
+            if fk_id not in fk_groups:
+                fk_groups[fk_id] = {"referenced_table": fk[2], "columns": [], "referenced_columns": []}
+            fk_groups[fk_id]["columns"].append(fk[3])
+            fk_groups[fk_id]["referenced_columns"].append(fk[4])
+
+        for _, group in fk_groups.items():
+            constraints.append(
+                ConstraintInfo(
+                    name=f"fk_{table_name}_{'_'.join(group['columns'])}",
+                    type="FOREIGN KEY",
+                    columns=group["columns"],
+                    referenced_table=group["referenced_table"],
+                    referenced_columns=group["referenced_columns"],
+                )
+            )
+        return constraints
+
+    def _find_constraints_for_postgresql(self, cursor: Any, schema_name: str, table_name: str) -> list[ConstraintInfo]:
+        sql = """
+            SELECT
+                tc.constraint_name,
+                tc.constraint_type,
+                kcu.column_name,
+                rc.update_rule,
+                rc.delete_rule,
+                ccu.table_name AS foreign_table_name,
+                ccu.column_name AS foreign_column_name,
+                chk.check_clause
+            FROM
+                information_schema.table_constraints tc
+            LEFT JOIN information_schema.key_column_usage kcu
+                ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema AND tc.table_name = kcu.table_name
+            LEFT JOIN information_schema.referential_constraints rc
+                ON tc.constraint_name = rc.constraint_name AND tc.table_schema = rc.constraint_schema
+            LEFT JOIN information_schema.constraint_column_usage ccu
+                ON rc.unique_constraint_name = ccu.constraint_name AND rc.unique_constraint_schema = ccu.table_schema
+            LEFT JOIN information_schema.check_constraints chk
+                ON tc.constraint_name = chk.constraint_name AND tc.table_schema = chk.constraint_schema
+            WHERE
+                tc.table_schema = %s AND tc.table_name = %s;
+        """
+        cursor.execute(sql, (schema_name, table_name))
+        raw_constraints = cursor.fetchall()
+
+        constraint_map = {}
+        for row in raw_constraints:
+            # Filter out 'NOT NULL' constraints which are handled by `is_nullable` in column info
+            const_type = row[1]
+            check_clause = row[7]
+            if const_type == "CHECK" and check_clause and "IS NOT NULL" in check_clause.upper():
+                continue
+
+            (name, _, column, on_update, on_delete, ref_table, ref_column, check_expr) = row
+            if name not in constraint_map:
+                constraint_map[name] = {
+                    "type": const_type,
+                    "columns": [],
+                    "referenced_table": ref_table,
+                    "referenced_columns": [],
+                    "check_expression": check_expr,
+                    "on_update": on_update,
+                    "on_delete": on_delete,
+                }
+            if column and column not in constraint_map[name]["columns"]:
+                constraint_map[name]["columns"].append(column)
+            if ref_column and ref_column not in constraint_map[name]["referenced_columns"]:
+                constraint_map[name]["referenced_columns"].append(ref_column)
+
+        return [
+            ConstraintInfo(
+                name=name,
+                type=data["type"],
+                columns=data["columns"],
+                referenced_table=data["referenced_table"],
+                referenced_columns=data["referenced_columns"] if data["referenced_columns"] else None,
+                check_expression=data["check_expression"],
+                on_update=data["on_update"],
+                on_delete=data["on_delete"],
+            )
+            for name, data in constraint_map.items()
+        ]
+
+    def find_indexes(
+        self, driver_module: Any, db_type: str, schema_name: str, table_name: str, **kwargs: Any
+    ) -> list[IndexInfo]:
         """
         테이블의 인덱스 정보를 조회합니다.
-        - 현재는 SQLite만 지원합니다.
         - 실패 시 DB 드라이버의 예외를 직접 발생시킵니다.
         """
         connection = None
         try:
             connection = self._connect(driver_module, **kwargs)
             cursor = connection.cursor()
-            indexes = []
 
-            if db_type == "sqlite":
-                index_list_sql = f"PRAGMA index_list('{table_name}')"
-                cursor.execute(index_list_sql)
-                raw_indexes = cursor.fetchall()
-
-                for idx in raw_indexes:
-                    index_name = idx[1]
-                    is_unique = idx[2] == 1
-
-                    # "sqlite_autoindex_"로 시작하는 인덱스는 PK에 의해 자동 생성된 것이므로 제외
-                    if index_name.startswith("sqlite_autoindex_"):
-                        continue
-
-                    index_info_sql = f"PRAGMA index_info('{index_name}')"
-                    cursor.execute(index_info_sql)
-                    index_columns = [row[2] for row in cursor.fetchall()]
-
-                    if index_columns:
-                        indexes.append(IndexInfo(name=index_name, columns=index_columns, is_unique=is_unique))
-
-            # 다른 DB 타입에 대한 인덱스 조회 로직 추가 가능
-            # elif db_type == "postgresql": ...
-
-            return indexes
+            if db_type == DBTypesEnum.sqlite.name:
+                return self._find_indexes_for_sqlite(cursor, table_name)
+            elif db_type == DBTypesEnum.postgresql.name:
+                return self._find_indexes_for_postgresql(cursor, schema_name, table_name)
+            # elif db_type == ...:
+            return []
         finally:
             if connection:
                 connection.close()
+
+    def _find_indexes_for_sqlite(self, cursor: Any, table_name: str) -> list[IndexInfo]:
+        indexes = []
+        index_list_sql = f"PRAGMA index_list('{table_name}')"
+        cursor.execute(index_list_sql)
+        raw_indexes = cursor.fetchall()
+
+        for idx in raw_indexes:
+            index_name = idx[1]
+            is_unique = idx[2] == 1
+
+            # "sqlite_autoindex_"로 시작하는 인덱스는 PK에 의해 자동 생성된 것이므로 제외
+            if index_name.startswith("sqlite_autoindex_"):
+                continue
+
+            index_info_sql = f"PRAGMA index_info('{index_name}')"
+            cursor.execute(index_info_sql)
+            index_columns = [row[2] for row in cursor.fetchall()]
+
+            if index_columns:
+                indexes.append(IndexInfo(name=index_name, columns=index_columns, is_unique=is_unique))
+        return indexes
+
+    def _find_indexes_for_postgresql(self, cursor: Any, schema_name: str, table_name: str) -> list[IndexInfo]:
+        sql = """
+            SELECT
+                i.relname as index_name,
+                a.attname as column_name,
+                ix.indisunique as is_unique,
+                ix.indisprimary as is_primary
+            FROM
+                pg_class t,
+                pg_class i,
+                pg_index ix,
+                pg_attribute a,
+                pg_namespace n
+            WHERE
+                t.oid = ix.indrelid
+                and i.oid = ix.indexrelid
+                and a.attrelid = t.oid
+                and a.attnum = ANY(ix.indkey)
+                and t.relkind = 'r'
+                and n.oid = t.relnamespace
+                and n.nspname = %s
+                and t.relname = %s
+            ORDER BY
+                i.relname, a.attnum;
+        """
+        cursor.execute(sql, (schema_name, table_name))
+        raw_indexes = cursor.fetchall()
+
+        index_map = {}
+        for row in raw_indexes:
+            index_name, column_name, is_unique, is_primary = row
+            if is_primary:  # Exclude indexes created for PRIMARY KEY constraints
+                continue
+            if index_name not in index_map:
+                index_map[index_name] = {"columns": [], "is_unique": is_unique}
+            index_map[index_name]["columns"].append(column_name)
+
+        return [
+            IndexInfo(name=name, columns=data["columns"], is_unique=data["is_unique"])
+            for name, data in index_map.items()
+        ]
 
     # ─────────────────────────────
     # DB 연결 메서드

@@ -39,6 +39,7 @@ class TableConstraintInDB(AnnotationBase):
     table_annotation_id: str
     constraint_type: ConstraintTypeEnum
     name: str | None = None
+    description: str | None = None
     expression: str | None = None
     ref_table: str | None = None
     on_update_action: str | None = None

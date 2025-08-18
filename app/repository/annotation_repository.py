@@ -20,6 +20,11 @@ from app.schemas.annotation.response_model import (
 
 
 class AnnotationRepository:
+    """
+    어노테이션 데이터에 대한 데이터베이스 CRUD 작업을 처리합니다.
+    모든 메서드는 내부적으로 `sqlite3`를 사용하여 로컬 DB와 상호작용합니다.
+    """
+
     def create_full_annotation(
         self,
         db_conn: sqlite3.Connection,
@@ -96,6 +101,7 @@ class AnnotationRepository:
                 c.table_annotation_id,
                 c.constraint_type,
                 c.name,
+                c.description,
                 c.expression,
                 c.ref_table,
                 c.on_update_action,
@@ -107,8 +113,8 @@ class AnnotationRepository:
         ]
         cursor.executemany(
             """
-            INSERT INTO table_constraint (id, table_annotation_id, constraint_type, name, expression, ref_table, on_update_action, on_delete_action, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO table_constraint (id, table_annotation_id, constraint_type, name, description, expression, ref_table, on_update_action, on_delete_action, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             constraint_data,
         )
@@ -182,18 +188,24 @@ class AnnotationRepository:
 
                 # 컬럼 정보
                 cursor.execute(
-                    "SELECT id, column_name, description FROM column_annotation WHERE table_annotation_id = ?",
+                    "SELECT id, column_name, description, data_type, is_nullable, default_value FROM column_annotation WHERE table_annotation_id = ?",
                     (table_id,),
                 )
-                columns = [ColumnAnnotationDetail.model_validate(dict(c)) for c in cursor.fetchall()]
+                columns = []
+                for c in cursor.fetchall():
+                    c_dict = dict(c)
+                    c_dict["is_nullable"] = (
+                        bool(c_dict["is_nullable"]) if c_dict.get("is_nullable") is not None else None
+                    )
+                    columns.append(ColumnAnnotationDetail.model_validate(c_dict))
 
                 # 제약조건 정보
                 cursor.execute(
                     """
-                    SELECT tc.name, tc.constraint_type, ca.column_name
+                    SELECT tc.name, tc.constraint_type, tc.description, ca.column_name
                     FROM table_constraint tc
-                    JOIN constraint_column cc ON tc.id = cc.constraint_id
-                    JOIN column_annotation ca ON cc.column_annotation_id = ca.id
+                    LEFT JOIN constraint_column cc ON tc.id = cc.constraint_id
+                    LEFT JOIN column_annotation ca ON cc.column_annotation_id = ca.id
                     WHERE tc.table_annotation_id = ?
                     """,
                     (table_id,),
@@ -201,10 +213,16 @@ class AnnotationRepository:
                 constraint_map = {}
                 for row in cursor.fetchall():
                     if row["name"] not in constraint_map:
-                        constraint_map[row["name"]] = {"type": row["constraint_type"], "columns": []}
-                    constraint_map[row["name"]]["columns"].append(row["column_name"])
+                        constraint_map[row["name"]] = {
+                            "type": row["constraint_type"],
+                            "columns": [],
+                            "description": row["description"],
+                        }
+                    if row["column_name"]:
+                        constraint_map[row["name"]]["columns"].append(row["column_name"])
                 constraints = [
-                    ConstraintDetail(name=k, type=v["type"], columns=v["columns"]) for k, v in constraint_map.items()
+                    ConstraintDetail(name=k, type=v["type"], columns=v["columns"], description=v["description"])
+                    for k, v in constraint_map.items()
                 ]
 
                 # 인덱스 정보

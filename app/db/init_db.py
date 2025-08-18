@@ -303,6 +303,7 @@ def initialize_database():
             "table_annotation_id": "VARCHAR(64) NOT NULL",
             "constraint_type": "VARCHAR(16) NOT NULL",
             "name": "VARCHAR(255)",
+            "description": "TEXT",
             "expression": "TEXT",
             "ref_table": "VARCHAR(255)",
             "on_update_action": "VARCHAR(16)",

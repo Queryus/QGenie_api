@@ -53,6 +53,7 @@ class ColumnInfo(BaseModel):
     default: Any | None = Field(None, description="기본값")
     comment: str | None = Field(None, description="코멘트")
     is_pk: bool = Field(False, description="기본 키(Primary Key) 여부")
+    ordinal_position: int | None = Field(None, description="컬럼 순서")
 
 
 class ConstraintInfo(BaseModel):
@@ -64,6 +65,8 @@ class ConstraintInfo(BaseModel):
     # FOREIGN KEY 관련 필드
     referenced_table: str | None = Field(None, description="참조하는 테이블 (FK)")
     referenced_columns: list[str] | None = Field(None, description="참조하는 테이블의 컬럼 (FK)")
+    on_update: str | None = Field(None, description="UPDATE 시 동작 (FK)")
+    on_delete: str | None = Field(None, description="DELETE 시 동작 (FK)")
     # CHECK 관련 필드
     check_expression: str | None = Field(None, description="CHECK 제약 조건 표현식")
 
