@@ -10,4 +10,5 @@ class ChatMessagesReqeust(RequestBase):
     message: str = Field(..., description="메시지 내용")
 
     def validate(self):
-        self.validate_chat_tab_id()
+        self.validate_chat_tab_id(self.chat_tab_id)
+        self.validate_message(self.message)

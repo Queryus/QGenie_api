@@ -7,7 +7,7 @@ from app.core.exceptions import APIException
 from app.core.response import ResponseMessage
 from app.core.status import CommonCode
 from app.schemas.user_db.db_profile_model import DBProfileInfo, UpdateOrCreateDBProfile
-from app.schemas.user_db.result_model import ColumnInfo, DBProfile, TableInfo
+from app.schemas.user_db.result_model import ColumnInfo, DBDetail, DBProfile, TableInfo
 from app.services.user_db_service import UserDbService, user_db_service
 
 user_db_service_dependency = Depends(lambda: user_db_service)
@@ -34,52 +34,52 @@ def connection_test(
 
 @router.post(
     "/create/profile",
-    response_model=ResponseMessage[str],
+    response_model=ResponseMessage[dict],
     summary="DB 프로필 저장",
 )
 def create_profile(
     create_db_info: UpdateOrCreateDBProfile,
     service: UserDbService = user_db_service_dependency,
-) -> ResponseMessage[str]:
+) -> ResponseMessage[dict]:
     create_db_info.validate_required_fields()
     result = service.create_profile(create_db_info)
 
     if not result.is_successful:
         raise APIException(result.code)
-    return ResponseMessage.success(value=result.view_name, code=result.code)
+    return ResponseMessage.success(value=result.data, code=result.code)
 
 
 @router.put(
     "/modify/profile",
-    response_model=ResponseMessage[str],
+    response_model=ResponseMessage[dict],
     summary="DB 프로필 업데이트",
 )
 def update_profile(
     update_db_info: UpdateOrCreateDBProfile,
     service: UserDbService = user_db_service_dependency,
-) -> ResponseMessage[str]:
+) -> ResponseMessage[dict]:
     update_db_info.validate_required_fields()
     result = service.update_profile(update_db_info)
 
     if not result.is_successful:
         raise APIException(result.code)
-    return ResponseMessage.success(value=result.view_name, code=result.code)
+    return ResponseMessage.success(value=result.data, code=result.code)
 
 
 @router.delete(
     "/remove/{profile_id}",
-    response_model=ResponseMessage[str],
+    response_model=ResponseMessage[dict],
     summary="DB 프로필 삭제",
 )
 def delete_profile(
     profile_id: str,
     service: UserDbService = user_db_service_dependency,
-) -> ResponseMessage[str]:
+) -> ResponseMessage[dict]:
     result = service.delete_profile(profile_id)
 
     if not result.is_successful:
         raise APIException(result.code)
-    return ResponseMessage.success(value=result.view_name, code=result.code)
+    return ResponseMessage.success(value=result.data, code=result.code)
 
 
 @router.get(
@@ -156,3 +156,18 @@ def find_all_schema_info(
     full_schema_info = service.get_full_schema_info(db_info)
 
     return ResponseMessage.success(value=full_schema_info, code=CommonCode.SUCCESS)
+
+
+@router.get(
+    "/find/hierarchical-schema/{profile_id}",
+    response_model=ResponseMessage[list[DBDetail]],
+    summary="특정 DB의 전체 스키마의 계층적 상세 정보 조회",
+    description="스키마, 테이블, 컬럼, 제약조건, 인덱스를 포함한 모든 스키마 정보를 계층 구조로 반환합니다.",
+)
+def find_hierarchical_schema_info(
+    profile_id: str, service: UserDbService = user_db_service_dependency
+) -> ResponseMessage[list[DBDetail]]:
+    db_info = service.find_profile(profile_id)
+    hierarchical_schema_info = service.get_hierarchical_schema_info(db_info)
+
+    return ResponseMessage.success(value=hierarchical_schema_info, code=CommonCode.SUCCESS)
