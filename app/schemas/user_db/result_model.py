@@ -106,3 +106,15 @@ class TableListResult(BasicResult):
 
 class ColumnListResult(BasicResult):
     columns: list[ColumnInfo] = Field([], description="컬럼 정보 목록")
+
+
+# ─────────────────────────────
+# 계층적 스키마 조회를 위한 모델
+# ─────────────────────────────
+
+
+class SchemaDetail(BaseModel):
+    """계층적 조회에서 스키마 정보를 담는 모델 (테이블 포함)"""
+
+    schema_name: str = Field(..., description="스키마 이름")
+    tables: list[TableInfo] = Field([], description="테이블 목록")

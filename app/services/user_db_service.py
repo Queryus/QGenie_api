@@ -19,6 +19,7 @@ from app.schemas.user_db.result_model import (
     BasicResult,
     ChangeProfileResult,
     ColumnListResult,
+    SchemaDetail,
     SchemaInfoResult,
     TableInfo,
     TableListResult,
@@ -217,6 +218,67 @@ class UserDbService:
             logging.error("An unexpected error occurred in get_full_schema_info", exc_info=True)
             raise APIException(CommonCode.FAIL) from e
 
+    def get_hierarchical_schema_info(
+        self, db_info: AllDBProfileInfo, repository: UserDbRepository = user_db_repository
+    ) -> list[SchemaDetail]:
+        """
+        DB 프로필 정보를 받아 해당 데이터베이스의 전체 스키마 정보를
+        계층적인 구조 (스키마 -> 테이블 -> 컬럼 등)로 조회하여 반환합니다.
+        """
+        logging.info(f"Starting hierarchical schema scan for db_profile: {db_info.id}")
+        try:
+            driver_module = self._get_driver_module(db_info.type)
+            connect_kwargs = self._prepare_connection_args(db_info)
+
+            schemas_result = repository.find_schemas(
+                driver_module, self._get_schema_query(db_info.type), **connect_kwargs
+            )
+
+            if not schemas_result.is_successful:
+                raise APIException(CommonCode.FAIL_FIND_SCHEMAS)
+
+            schemas_to_scan = schemas_result.schemas
+
+            # For sqlite, schemas might be empty, default to 'main'
+            if db_info.type.lower() == "sqlite" and not schemas_to_scan:
+                schemas_to_scan = ["main"]
+
+            hierarchical_schema_info = []
+            for schema_name in sorted(schemas_to_scan):
+                # For Oracle, schema names are uppercase.
+                effective_schema_name = schema_name
+                if db_info.type.lower() == "oracle":
+                    effective_schema_name = schema_name.upper()
+
+                tables_result = repository.find_tables(
+                    driver_module, self._get_table_query(db_info.type), effective_schema_name, **connect_kwargs
+                )
+                logging.info(
+                    f"Found {len(tables_result.tables)} tables in schema '{effective_schema_name}': {tables_result.tables}"
+                )
+
+                if not tables_result.is_successful:
+                    logging.warning(f"Failed to find tables for schema '{effective_schema_name}'. Skipping.")
+                    continue
+
+                table_details = []
+                for table_name in tables_result.tables:
+                    table_info = self._get_table_details(
+                        driver_module, db_info, effective_schema_name, table_name, connect_kwargs, repository
+                    )
+                    table_details.append(table_info)
+
+                if table_details:
+                    hierarchical_schema_info.append(SchemaDetail(schema_name=schema_name, tables=table_details))
+
+            logging.info(f"Finished hierarchical schema scan. Total schemas found: {len(hierarchical_schema_info)}.")
+            return hierarchical_schema_info
+        except APIException:
+            raise
+        except Exception as e:
+            logging.error("An unexpected error occurred in get_hierarchical_schema_info", exc_info=True)
+            raise APIException(CommonCode.FAIL) from e
+
     def _get_schemas_to_scan(
         self,
         db_info: AllDBProfileInfo,
@@ -400,7 +462,7 @@ class UserDbService:
                     WHERE table_type = 'BASE TABLE' AND table_schema = %s
                 """
         elif db_type == "oracle":
-            return "SELECT table_name FROM user_tables"
+            return "SELECT table_name FROM all_tables WHERE owner = :owner"
         elif db_type == "sqlite":
             return "SELECT name FROM sqlite_master WHERE type='table'"
         return None

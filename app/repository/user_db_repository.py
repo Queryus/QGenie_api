@@ -316,30 +316,31 @@ class UserDbRepository:
                 c.data_scale,
                 c.column_id as ordinal_position
             FROM
-                user_tab_columns c
+                all_tab_columns c
             LEFT JOIN
-                user_col_comments cc ON c.table_name = cc.table_name AND c.column_name = cc.column_name
+                all_col_comments cc ON c.owner = cc.owner AND c.table_name = cc.table_name AND c.column_name = cc.column_name
             LEFT JOIN
                 (
                     SELECT
+                        acc.owner,
                         acc.table_name,
                         acc.column_name,
                         ac.constraint_type
                     FROM
-                        user_constraints ac
+                        all_constraints ac
                     JOIN
-                        user_cons_columns acc ON ac.constraint_name = acc.constraint_name
+                        all_cons_columns acc ON ac.owner = acc.owner AND ac.constraint_name = acc.constraint_name
                     WHERE
                         ac.constraint_type = 'P'
-                ) cons ON c.table_name = cons.table_name AND c.column_name = cons.column_name
+                ) cons ON c.owner = cons.owner AND c.table_name = cons.table_name AND c.column_name = cons.column_name
             WHERE
-                c.table_name = :table_name
+                c.owner = :owner AND c.table_name = :table_name
             ORDER BY
                 c.column_id
         """
         try:
-            logging.info(f"Executing find_columns_for_oracle for table: {table_name.upper()}")
-            cursor.execute(sql, {"table_name": table_name.upper()})
+            logging.info(f"Executing find_columns_for_oracle for table: {schema_name.upper()}.{table_name.upper()}")
+            cursor.execute(sql, {"owner": schema_name.upper(), "table_name": table_name.upper()})
             columns_raw = cursor.fetchall()
             logging.info(f"Found {len(columns_raw)} raw columns for table: {table_name.upper()}")
 
@@ -556,21 +557,21 @@ class UserDbRepository:
                 r_acc.column_name AS referenced_column,
                 ac.delete_rule
             FROM
-                user_constraints ac
+                all_constraints ac
             JOIN
-                user_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.table_name = acc.table_name
+                all_cons_columns acc ON ac.owner = acc.owner AND ac.constraint_name = acc.constraint_name AND ac.table_name = acc.table_name
             LEFT JOIN
-                user_constraints r_ac ON ac.r_constraint_name = r_ac.constraint_name
+                all_constraints r_ac ON ac.r_owner = r_ac.owner AND ac.r_constraint_name = r_ac.constraint_name
             LEFT JOIN
-                user_cons_columns r_acc ON ac.r_constraint_name = r_acc.constraint_name AND acc.position = r_acc.position
+                all_cons_columns r_acc ON ac.r_owner = r_acc.owner AND ac.r_constraint_name = r_acc.constraint_name AND acc.position = r_acc.position
             WHERE
-                ac.table_name = :table_name
+                ac.owner = :owner AND ac.table_name = :table_name
             ORDER BY
                 ac.constraint_name, acc.position
         """
         try:
-            logging.info(f"Executing find_constraints_for_oracle for table: {table_name.upper()}")
-            cursor.execute(sql, {"table_name": table_name.upper()})
+            logging.info(f"Executing find_constraints_for_oracle for table: {schema_name.upper()}.{table_name.upper()}")
+            cursor.execute(sql, {"owner": schema_name.upper(), "table_name": table_name.upper()})
             raw_constraints = cursor.fetchall()
             logging.info(f"Found {len(raw_constraints)} raw constraints for table: {table_name.upper()}")
 
@@ -719,20 +720,20 @@ class UserDbRepository:
                 i.uniqueness,
                 ic.column_name
             FROM
-                user_indexes i
+                all_indexes i
             JOIN
-                user_ind_columns ic ON i.index_name = ic.index_name
+                all_ind_columns ic ON i.owner = ic.index_owner AND i.index_name = ic.index_name
             LEFT JOIN
-                user_constraints ac ON i.index_name = ac.constraint_name AND ac.constraint_type = 'P'
+                all_constraints ac ON i.owner = ac.owner AND i.index_name = ac.constraint_name AND ac.constraint_type = 'P'
             WHERE
-                i.table_name = :table_name
+                i.owner = :owner AND i.table_name = :table_name
                 AND ac.constraint_name IS NULL
             ORDER BY
                 i.index_name, ic.column_position
         """
         try:
-            logging.info(f"Executing find_indexes_for_oracle for table: {table_name.upper()}")
-            cursor.execute(sql, {"table_name": table_name.upper()})
+            logging.info(f"Executing find_indexes_for_oracle for table: {schema_name.upper()}.{table_name.upper()}")
+            cursor.execute(sql, {"owner": schema_name.upper(), "table_name": table_name.upper()})
             raw_indexes = cursor.fetchall()
             logging.info(f"Found {len(raw_indexes)} raw indexes for table: {table_name.upper()}")
 
