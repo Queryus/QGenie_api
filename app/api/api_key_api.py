@@ -40,7 +40,7 @@ def store_api_key(
 
 
 @router.get(
-    "/result",
+    "/find",
     response_model=ResponseMessage[list[APIKeyResponse]],
     summary="저장된 모든 API KEY 정보 조회",
     description="""
@@ -67,7 +67,7 @@ def get_all_api_keys(
 
 
 @router.get(
-    "/result/{serviceName}",
+    "/find/{serviceName}",
     response_model=ResponseMessage[APIKeyResponse],
     summary="특정 서비스의 API KEY 정보 조회",
 )
