@@ -118,3 +118,11 @@ class SchemaDetail(BaseModel):
 
     schema_name: str = Field(..., description="스키마 이름")
     tables: list[TableInfo] = Field([], description="테이블 목록")
+
+
+class DBDetail(BaseModel):
+    """계층적 조회에서 DB 정보를 담는 모델 (스키마 포함)"""
+
+    db_name: str | None = Field(None, description="데이터베이스 이름")
+    db_type: str = Field(..., description="데이터베이스 종류")
+    schemas: list[SchemaDetail] = Field([], description="스키마 목록")

@@ -7,7 +7,7 @@ from app.core.exceptions import APIException
 from app.core.response import ResponseMessage
 from app.core.status import CommonCode
 from app.schemas.user_db.db_profile_model import DBProfileInfo, UpdateOrCreateDBProfile
-from app.schemas.user_db.result_model import ColumnInfo, DBProfile, SchemaDetail, TableInfo
+from app.schemas.user_db.result_model import ColumnInfo, DBDetail, DBProfile, TableInfo
 from app.services.user_db_service import UserDbService, user_db_service
 
 user_db_service_dependency = Depends(lambda: user_db_service)
@@ -160,13 +160,13 @@ def find_all_schema_info(
 
 @router.get(
     "/find/hierarchical-schema/{profile_id}",
-    response_model=ResponseMessage[list[SchemaDetail]],
+    response_model=ResponseMessage[DBDetail],
     summary="특정 DB의 전체 스키마의 계층적 상세 정보 조회",
     description="스키마, 테이블, 컬럼, 제약조건, 인덱스를 포함한 모든 스키마 정보를 계층 구조로 반환합니다.",
 )
 def find_hierarchical_schema_info(
     profile_id: str, service: UserDbService = user_db_service_dependency
-) -> ResponseMessage[list[SchemaDetail]]:
+) -> ResponseMessage[DBDetail]:
     db_info = service.find_profile(profile_id)
     hierarchical_schema_info = service.get_hierarchical_schema_info(db_info)
 

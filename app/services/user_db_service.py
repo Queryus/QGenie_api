@@ -19,6 +19,7 @@ from app.schemas.user_db.result_model import (
     BasicResult,
     ChangeProfileResult,
     ColumnListResult,
+    DBDetail,
     SchemaDetail,
     SchemaInfoResult,
     TableInfo,
@@ -220,7 +221,7 @@ class UserDbService:
 
     def get_hierarchical_schema_info(
         self, db_info: AllDBProfileInfo, repository: UserDbRepository = user_db_repository
-    ) -> list[SchemaDetail]:
+    ) -> DBDetail:
         """
         DB 프로필 정보를 받아 해당 데이터베이스의 전체 스키마 정보를
         계층적인 구조 (스키마 -> 테이블 -> 컬럼 등)로 조회하여 반환합니다.
@@ -243,7 +244,7 @@ class UserDbService:
             if db_info.type.lower() == "sqlite" and not schemas_to_scan:
                 schemas_to_scan = ["main"]
 
-            hierarchical_schema_info = []
+            schema_details = []
             for schema_name in sorted(schemas_to_scan):
                 # For Oracle, schema names are uppercase.
                 effective_schema_name = schema_name
@@ -269,10 +270,10 @@ class UserDbService:
                     table_details.append(table_info)
 
                 if table_details:
-                    hierarchical_schema_info.append(SchemaDetail(schema_name=schema_name, tables=table_details))
+                    schema_details.append(SchemaDetail(schema_name=schema_name, tables=table_details))
 
-            logging.info(f"Finished hierarchical schema scan. Total schemas found: {len(hierarchical_schema_info)}.")
-            return hierarchical_schema_info
+            logging.info(f"Finished hierarchical schema scan. Total schemas found: {len(schema_details)}.")
+            return DBDetail(db_name=db_info.name, db_type=db_info.type, schemas=schema_details)
         except APIException:
             raise
         except Exception as e:
