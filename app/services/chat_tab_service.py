@@ -77,22 +77,5 @@ class ChatTabService:
         except sqlite3.Error as e:
             raise APIException(CommonCode.FAIL) from e
 
-    def get_chat_tab_by_tabId(self, tabId: str) -> ChatTabInDB:
-        """데이터베이스에 저장된 특정 Chat_tab을 조회합니다."""
-        try:
-            tabId.validate(tabId)
-        except ValueError as e:
-            raise APIException(CommonCode.INVALID_ANNOTATION_REQUEST, detail=str(e)) from e
-
-        try:
-            chat_tab = self.repository.get_chat_tab_by_id(tabId)
-
-            if not chat_tab:
-                raise APIException(CommonCode.NO_CHAT_TAB_DATA)
-            return chat_tab
-
-        except sqlite3.Error as e:
-            raise APIException(CommonCode.FAIL) from e
-
 
 chat_tab_service = ChatTabService()

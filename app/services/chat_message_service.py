@@ -10,59 +10,74 @@ from app.core.exceptions import APIException
 from app.core.status import CommonCode
 from app.core.utils import generate_prefixed_uuid
 from app.repository.chat_message_repository import ChatMessageRepository, chat_message_repository
+from app.schemas.chat_message.base_model import validate_chat_tab_id_format
 from app.schemas.chat_message.db_model import ChatMessageInDB
 from app.schemas.chat_message.request_model import ChatMessagesReqeust
-from app.schemas.chat_message.response_model import ChatMessagesResponse
+from app.schemas.chat_message.response_model import ALLChatMessagesResponseByTab, ChatMessagesResponse
 
 chat_message_repository_dependency = Depends(lambda: chat_message_repository)
 
 AI_SERVER_URL = os.getenv("ENV_AI_SERVER_URL")
+
+if not AI_SERVER_URL:
+    raise APIException(CommonCode.FAIL_AI_SERVER_CONNECTION)
+
+url: str = AI_SERVER_URL
 
 
 class ChatMessageService:
     def __init__(self, repository: ChatMessageRepository = chat_message_repository):
         self.repository = repository
 
-    def get_chat_messages_by_tabId(self, tabId: str) -> ChatMessageInDB:
+    def get_chat_tab_and_messages_by_id(self, tab_id: str) -> ALLChatMessagesResponseByTab:
         """
-        채팅 탭 메타데이터와 메시지 목록을 모두 가져와서 조합합니다.
+        채팅 탭 정보와 메시지들을 함께 조회
         탭이 존재하지 않으면 예외를 발생시킵니다.
         """
-        try:
-            return self.repository.get_chat_messages_by_tabId(tabId)
+        # chat_tab_id 형식 유효성 검사
+        validate_chat_tab_id_format(tab_id)
 
+        # 채팅 탭 정보와 메시지 조회
+        try:
+            return self.repository.get_chat_tab_and_messages_by_id(tab_id)
         except sqlite3.Error as e:
             raise APIException(CommonCode.FAIL) from e
 
     async def create_chat_message(self, request: ChatMessagesReqeust) -> ChatMessagesResponse:
-        # 1. tab_id 확인
-        chat_tab_id = request.chat_tab_id
+        # 1. tab_id, message 유효성 검사 및 유무 확인
+        request.validate()
 
-        # chat_tab_id 유효성 검사
-        try:
-            request.validate()
-        except ValueError as e:
-            raise APIException(CommonCode.INVALID_CHAT_MESSAGE_REQUEST, detail=str(e)) from e
-
-        try:
-            # 같은 서비스 메서드 호출
-            self.get_chat_messages_by_tabId(chat_tab_id)
-        except sqlite3.Error as e:
-            raise APIException(CommonCode.FAIL) from e
+        self.repository.get_chat_tab_by_id(request.chat_tab_id)
 
         # 2. 사용자 질의 저장
         try:
-            user_request = self._transform_user_request_to_db_models(request)
+            self._transform_user_request_to_db_models(request)
         except sqlite3.Error as e:
             raise APIException(CommonCode.FAIL) from e
 
         # 3. AI 서버에 요청
-        ai_response = await self._request_chat_message_to_ai_server(user_request)
+        ai_response = await self._request_chat_message_to_ai_server(request)
 
         # 4. AI 서버 응답 저장
         response = self._transform_ai_response_to_db_models(request, ai_response)
 
-        return response
+        # DB 모델을 API 응답 모델로 변환
+        response_data = ChatMessagesResponse.model_validate(response)
+
+        return response_data
+
+    def get_chat_tab_by_id(self, request: ChatMessagesReqeust) -> ChatMessageInDB:
+        """특정 채팅 탭 조회"""
+
+        # 채팅 탭 ID 조회
+        try:
+            chat_tab = self.repository.get_chat_tab_by_id(request.chat_tab_id)
+            if not chat_tab:
+                raise APIException(CommonCode.NO_CHAT_TAB_DATA)
+            return chat_tab
+
+        except sqlite3.Error as e:
+            raise APIException(CommonCode.FAIL) from e
 
     def _transform_user_request_to_db_models(self, request: ChatMessagesReqeust) -> ChatMessageInDB:
         """사용자 질의를 데이터베이스에 저장합니다."""
@@ -90,14 +105,15 @@ class ChatMessageService:
                 raise APIException(CommonCode.DB_BUSY) from e
             raise APIException(CommonCode.FAIL) from e
 
-    async def _request_chat_message_to_ai_server(self, user_request: ChatMessagesReqeust) -> dict:
+    async def _request_chat_message_to_ai_server(self, request: ChatMessagesReqeust) -> dict:
         """AI 서버에 사용자 질의를 보내고 답변을 받아옵니다."""
         # 1. DB에서 해당 탭의 모든 메시지 조회
-        messages: list[ChatMessageInDB] = self.repository.get_chat_messages_by_tabId(user_request.chat_tab_id)
+        chat_tab_with_messages = self.repository.get_chat_tab_and_messages_by_id(request.chat_tab_id)
+        messages: list[ChatMessagesResponse] = chat_tab_with_messages.messages
 
         if not messages:
             history = []
-            latest_message = user_request.message  # DB에 없으면 요청 메시지 그대로
+            latest_message = request.message  # DB에 없으면 요청 메시지 그대로
         else:
             history = [{"role": m.sender, "content": m.message} for m in messages[:-1]]
             latest_message = messages[-1].message
@@ -108,7 +124,7 @@ class ChatMessageService:
         # 4. AI 서버에 POST 요청
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.post(AI_SERVER_URL, json=request_body, timeout=60.0)
+                response = await client.post(url, json=request_body, timeout=60.0)
                 response.raise_for_status()
                 return response.json()
             except httpx.HTTPStatusError as e:
@@ -116,7 +132,7 @@ class ChatMessageService:
             except httpx.RequestError as e:
                 raise APIException(CommonCode.FAIL_AI_SERVER_CONNECTION) from e
 
-    def _transform_ai_response_to_db_models(self, request: ChatMessagesReqeust, ai_response: str) -> ChatMessageInDB:
+    def _transform_ai_response_to_db_models(self, request: ChatMessagesReqeust, ai_response: dict) -> ChatMessageInDB:
         """AI 서버에서 받은 답변을 데이터베이스에 저장합니다."""
 
         new_id = generate_prefixed_uuid(DBSaveIdEnum.chat_message.value)

@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 
 from app.core.enum.sender import SenderEnum
 from app.core.response import ResponseMessage
 from app.core.status import CommonCode
 from app.schemas.chat_message.request_model import ChatMessagesReqeust
-from app.schemas.chat_message.response_model import ChatMessagesResponse
+from app.schemas.chat_message.response_model import ALLChatMessagesResponseByTab, ChatMessagesResponse
 from app.services.chat_message_service import ChatMessageService, chat_message_service
 
 chat_message_service_dependency = Depends(lambda: chat_message_service)
@@ -25,8 +25,6 @@ async def create_chat_message(
     """
     new_messages = await service.create_chat_message(request)
 
-    print(ChatMessagesResponse.model_json_schema())
-
     response_data = ChatMessagesResponse(
         id=new_messages.id,
         chat_tab_id=new_messages.chat_tab_id,
@@ -37,3 +35,20 @@ async def create_chat_message(
     )
 
     return ResponseMessage.success(value=response_data, code=CommonCode.SUCCESS_CREATE_CHAT_MESSAGES)
+
+
+@router.get(
+    "/find/{tabId}",
+    response_model=ResponseMessage[ALLChatMessagesResponseByTab],
+    summary="특정 탭의 메시지 전체 조회",
+)
+def get_chat_messages_by_tabId(
+    tabId: str = Path(..., description="채팅 탭 고유 ID"),
+    service: ChatMessageService = chat_message_service_dependency,
+) -> ResponseMessage[ALLChatMessagesResponseByTab]:
+    """tabId를 기준으로 해당 chat_tab의 전체 메시지를 가져옵니다."""
+
+    # 탭 정보와 메시지를 함께 조회
+    response_data = service.get_chat_tab_and_messages_by_id(tabId)
+
+    return ResponseMessage.success(value=response_data, code=CommonCode.SUCCESS_GET_CHAT_MESSAGES)
