@@ -6,6 +6,7 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.api import health_api
@@ -45,6 +46,15 @@ app = FastAPI()
 
 # 전체 로그 찍는 부분
 app.add_middleware(BaseHTTPMiddleware, dispatch=log_requests_middleware)
+
+# FIXME: CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 전역 예외 처리기 등록
 app.add_exception_handler(Exception, generic_exception_handler)
