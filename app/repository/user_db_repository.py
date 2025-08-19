@@ -333,13 +333,13 @@ class UserDbRepository:
                         ac.constraint_type = 'P'
                 ) cons ON c.table_name = cons.table_name AND c.column_name = cons.column_name
             WHERE
-                c.table_name = :table
+                c.table_name = :table_name
             ORDER BY
                 c.column_id
         """
         try:
             logging.info(f"Executing find_columns_for_oracle for table: {table_name.upper()}")
-            cursor.execute(sql, {"table": table_name.upper()})
+            cursor.execute(sql, {"table_name": table_name.upper()})
             columns_raw = cursor.fetchall()
             logging.info(f"Found {len(columns_raw)} raw columns for table: {table_name.upper()}")
 
@@ -564,13 +564,13 @@ class UserDbRepository:
             LEFT JOIN
                 user_cons_columns r_acc ON ac.r_constraint_name = r_acc.constraint_name AND acc.position = r_acc.position
             WHERE
-                ac.table_name = :table
+                ac.table_name = :table_name
             ORDER BY
                 ac.constraint_name, acc.position
         """
         try:
             logging.info(f"Executing find_constraints_for_oracle for table: {table_name.upper()}")
-            cursor.execute(sql, {"table": table_name.upper()})
+            cursor.execute(sql, {"table_name": table_name.upper()})
             raw_constraints = cursor.fetchall()
             logging.info(f"Found {len(raw_constraints)} raw constraints for table: {table_name.upper()}")
 
@@ -725,14 +725,14 @@ class UserDbRepository:
             LEFT JOIN
                 user_constraints ac ON i.index_name = ac.constraint_name AND ac.constraint_type = 'P'
             WHERE
-                i.table_name = :table
+                i.table_name = :table_name
                 AND ac.constraint_name IS NULL
             ORDER BY
                 i.index_name, ic.column_position
         """
         try:
             logging.info(f"Executing find_indexes_for_oracle for table: {table_name.upper()}")
-            cursor.execute(sql, {"table": table_name.upper()})
+            cursor.execute(sql, {"table_name": table_name.upper()})
             raw_indexes = cursor.fetchall()
             logging.info(f"Found {len(raw_indexes)} raw indexes for table: {table_name.upper()}")
 
@@ -747,8 +747,8 @@ class UserDbRepository:
                 IndexInfo(name=name, columns=data["columns"], is_unique=data["is_unique"])
                 for name, data in index_map.items()
             ]
-        except Exception as e:
-            logging.error(f"Error in _find_indexes_for_oracle for table {table_name}: {e}", exc_info=True)
+        except Exception:
+            # logging.error(f"Error in _find_indexes_for_oracle for table {table_name}: {e}", exc_info=True)
             return []
 
     def find_sample_rows(
