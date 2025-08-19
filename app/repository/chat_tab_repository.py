@@ -100,7 +100,7 @@ class ChatTabRepository:
                 conn.close()
 
     def get_all_chat_tab(self) -> list[ChatTabInDB]:
-        """데이터베이스에 저장된 모든 API Key를 조회합니다."""
+        """데이터베이스에 저장된 모든 Chat Tab ID를 조회합니다."""
         db_path = get_db_path()
         conn = None
         try:
@@ -112,27 +112,6 @@ class ChatTabRepository:
             rows = cursor.fetchall()
 
             return [ChatTabInDB.model_validate(dict(row)) for row in rows]
-        finally:
-            if conn:
-                conn.close()
-
-    def get_chat_tab_by_id(self, id: str | None) -> ChatTabInDB | None:
-        """ID에 해당하는 채팅 탭 정보를 가져옵니다."""
-        db_path = get_db_path()
-        conn = None
-        try:
-            conn = sqlite3.connect(str(db_path), timeout=10)
-            conn.row_factory = sqlite3.Row
-            cursor = conn.cursor()
-
-            cursor.execute("SELECT * FROM chat_tab WHERE id = ?", (id,))
-            row = cursor.fetchone()
-
-            if not row:
-                return None
-
-            return ChatTabInDB.model_validate(dict(row))
-
         finally:
             if conn:
                 conn.close()
