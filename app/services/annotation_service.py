@@ -194,6 +194,8 @@ class AnnotationService:
             database_name=db_profile.name or db_profile.username, tables=ai_tables, relationships=ai_relationships
         )
 
+        logging.info(ai_database.model_dump_json(indent=2))
+
         return AIAnnotationRequest(dbms_type=db_profile.type, databases=[ai_database])
 
     def _transform_ai_response_to_db_models(
