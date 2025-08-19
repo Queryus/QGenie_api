@@ -311,29 +311,28 @@ class UserDbRepository:
                 c.data_scale,
                 c.column_id as ordinal_position
             FROM
-                all_tab_columns c
+                user_tab_columns c
             LEFT JOIN
-                all_col_comments cc ON c.owner = cc.owner AND c.table_name = cc.table_name AND c.column_name = cc.column_name
+                user_col_comments cc ON c.table_name = cc.table_name AND c.column_name = cc.column_name
             LEFT JOIN
                 (
                     SELECT
-                        acc.owner,
                         acc.table_name,
                         acc.column_name,
                         ac.constraint_type
                     FROM
-                        all_constraints ac
+                        user_constraints ac
                     JOIN
-                        all_cons_columns acc ON ac.owner = acc.owner AND ac.constraint_name = acc.constraint_name
+                        user_cons_columns acc ON ac.constraint_name = acc.constraint_name
                     WHERE
                         ac.constraint_type = 'P'
-                ) cons ON c.owner = cons.owner AND c.table_name = cons.table_name AND c.column_name = cons.column_name
+                ) cons ON c.table_name = cons.table_name AND c.column_name = cons.column_name
             WHERE
-                c.owner = :owner AND c.table_name = :table
+                c.table_name = :table
             ORDER BY
                 c.column_id
         """
-        cursor.execute(sql, {"owner": schema_name.upper(), "table": table_name.upper()})
+        cursor.execute(sql, {"table": table_name.upper()})
         columns_raw = cursor.fetchall()
         columns = []
         for c in columns_raw:
@@ -544,19 +543,19 @@ class UserDbRepository:
                 r_acc.column_name AS referenced_column,
                 ac.delete_rule
             FROM
-                all_constraints ac
+                user_constraints ac
             JOIN
-                all_cons_columns acc ON ac.owner = acc.owner AND ac.constraint_name = acc.constraint_name AND ac.table_name = acc.table_name
+                user_cons_columns acc ON ac.constraint_name = acc.constraint_name AND ac.table_name = acc.table_name
             LEFT JOIN
-                all_constraints r_ac ON ac.r_owner = r_ac.owner AND ac.r_constraint_name = r_ac.constraint_name
+                user_constraints r_ac ON ac.r_constraint_name = r_ac.constraint_name
             LEFT JOIN
-                all_cons_columns r_acc ON ac.r_owner = r_acc.owner AND ac.r_constraint_name = r_acc.constraint_name AND acc.position = r_acc.position
+                user_cons_columns r_acc ON ac.r_constraint_name = r_acc.constraint_name AND acc.position = r_acc.position
             WHERE
-                ac.owner = :owner AND ac.table_name = :table
+                ac.table_name = :table
             ORDER BY
                 ac.constraint_name, acc.position
         """
-        cursor.execute(sql, {"owner": schema_name.upper(), "table": table_name.upper()})
+        cursor.execute(sql, {"table": table_name.upper()})
         raw_constraints = cursor.fetchall()
 
         constraint_map = {}
@@ -700,19 +699,18 @@ class UserDbRepository:
                 i.uniqueness,
                 ic.column_name
             FROM
-                all_indexes i
+                user_indexes i
             JOIN
-                all_ind_columns ic ON i.owner = ic.index_owner AND i.index_name = ic.index_name
+                user_ind_columns ic ON i.index_name = ic.index_name
             LEFT JOIN
-                all_constraints ac ON i.owner = ac.owner AND i.index_name = ac.constraint_name AND ac.constraint_type = 'P'
+                user_constraints ac ON i.index_name = ac.constraint_name AND ac.constraint_type = 'P'
             WHERE
-                i.table_owner = :owner
-                AND i.table_name = :table
+                i.table_name = :table
                 AND ac.constraint_name IS NULL
             ORDER BY
                 i.index_name, ic.column_position
         """
-        cursor.execute(sql, {"owner": schema_name.upper(), "table": table_name.upper()})
+        cursor.execute(sql, {"table": table_name.upper()})
         raw_indexes = cursor.fetchall()
 
         index_map = {}

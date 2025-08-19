@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 from datetime import datetime
 from typing import Any
@@ -34,7 +35,6 @@ from app.schemas.user_db.db_profile_model import AllDBProfileInfo
 from app.schemas.user_db.result_model import TableInfo as UserDBTableInfo
 from app.services.user_db_service import UserDbService, user_db_service
 
-annotation_repository_dependency = Depends(lambda: annotation_repository)
 user_db_service_dependency = Depends(lambda: user_db_service)
 
 # AI 서버의 주소 (임시)
@@ -63,6 +63,7 @@ class AnnotationService:
         3. TODO: AI 서버에 요청 (현재는 Mock 데이터 사용)
         4. 트랜잭션 내에서 전체 어노테이션 정보 저장 및 DB 프로필 업데이트
         """
+        logging.info(f"Starting annotation creation for db_profile_id: {request.db_profile_id}")
         try:
             request.validate()
         except ValueError as e:
@@ -70,15 +71,23 @@ class AnnotationService:
 
         # 1. DB 프로필, 전체 스키마 정보, 샘플 데이터 조회
         db_profile = self.user_db_service.find_profile(request.db_profile_id)
+        logging.info("Successfully fetched DB profile.")
+
         full_schema_info = self.user_db_service.get_full_schema_info(db_profile)
+        logging.info(f"Successfully fetched full schema info with {len(full_schema_info)} tables.")
+
         sample_rows = self.user_db_service.get_sample_rows(db_profile, full_schema_info)
+        logging.info(f"Successfully fetched sample rows for {len(sample_rows)} tables.")
 
         # 2. AI 서버에 요청할 데이터 모델 생성
         ai_request_body = self._prepare_ai_request_body(db_profile, full_schema_info, sample_rows)
-        print(ai_request_body.model_dump_json(indent=2))
+        logging.info("Prepared AI request body.")
+        logging.debug(f"AI Request Body: {ai_request_body.model_dump_json(indent=2)}")
 
         # 3. AI 서버에 요청 (현재는 Mock 데이터 사용)
         ai_response = await self._request_annotation_to_ai_server(ai_request_body)
+        logging.info("Received AI response.")
+        logging.debug(f"AI Response: {ai_response}")
 
         # 4. 트랜잭션 내에서 전체 어노테이션 정보 저장 및 DB 프로필 업데이트
         db_path = get_db_path()
@@ -90,23 +99,29 @@ class AnnotationService:
             db_models = self._transform_ai_response_to_db_models(
                 ai_response, db_profile, request.db_profile_id, full_schema_info
             )
+            logging.info("Transformed AI response to DB models.")
             self.repository.create_full_annotation(db_conn=conn, **db_models)
+            logging.info("Successfully saved full annotation to the database.")
 
             annotation_id = db_models["db_annotation"].id
             self.repository.update_db_profile_annotation_id(
                 db_conn=conn, db_profile_id=request.db_profile_id, annotation_id=annotation_id
             )
+            logging.info(f"Updated db_profile with new annotation_id: {annotation_id}")
 
             conn.commit()
+            logging.info("Database transaction committed.")
 
         except sqlite3.Error as e:
             if conn:
                 conn.rollback()
+            logging.error("Database transaction failed and rolled back.", exc_info=True)
             raise APIException(CommonCode.FAIL_CREATE_ANNOTATION, detail=f"Database transaction failed: {e}") from e
         finally:
             if conn:
                 conn.close()
 
+        logging.info(f"Annotation creation process completed for annotation_id: {annotation_id}")
         return self.get_full_annotation(annotation_id)
 
     def get_annotation_by_db_profile_id(self, db_profile_id: str) -> FullAnnotationResponse:
@@ -225,6 +240,9 @@ class AnnotationService:
         for tbl_data in ai_response.get("tables", []):
             original_table = schema_lookup.get(tbl_data["table_name"])
             if not original_table:
+                logging.warning(
+                    f"Table '{tbl_data['table_name']}' from AI response not found in original schema. Skipping."
+                )
                 continue
 
             (
