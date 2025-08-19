@@ -90,7 +90,22 @@ jobs:
       # 7. PyInstaller를 사용해 파이썬 코드를 실행 파일로 만듭니다.
       - name: Build executable with PyInstaller
         shell: bash
-        run: poetry run pyinstaller --clean --additional-hooks-dir ./hooks --add-data "app/assets:assets" --paths . --hidden-import=dotenv --onefile --name ${{ env.EXE_NAME }} app/main.py
+        run: |
+          poetry run pyinstaller --clean \
+            --additional-hooks-dir ./hooks \
+            --add-data "app/assets:assets" \
+            --paths . \
+            --hidden-import=dotenv \
+            --hidden-import=sqlalchemy.dialects.sqlite \
+            --hidden-import=sqlalchemy.dialects.mysql \
+            --hidden-import=sqlalchemy.dialects.mysql.pymysql \
+            --hidden-import=sqlalchemy.dialects.mysql.mysqlconnector \
+            --hidden-import=sqlalchemy.dialects.postgresql \
+            --hidden-import=sqlalchemy.dialects.oracle \
+            --collect-binaries psycopg2 \
+            --collect-binaries oracledb \
+            --onefile \
+            --name ${{ env.EXE_NAME }} app/main.py
 
 
       # 8. 빌드된 실행 파일을 다음 단계(deploy)에서 사용할 수 있도록 아티팩트로 업로드합니다.
