@@ -261,8 +261,12 @@ class UserDbService:
     ) -> DBDetail | None:
         """특정 데이터베이스의 모든 스키마와 테이블 정보를 조회하여 DBDetail 모델을 반환합니다."""
         db_type = db_info.type.lower()
-        current_db_info = db_info.model_copy(update={"name": db_name})
-        connect_kwargs = self._prepare_connection_args(current_db_info)
+        if db_type == "sqlite":
+            current_db_info = db_info
+            connect_kwargs = self._prepare_connection_args(db_info)
+        else:
+            current_db_info = db_info.model_copy(update={"name": db_name})
+            connect_kwargs = self._prepare_connection_args(current_db_info)
 
         schema_query = self._get_schema_query(db_type, db_name)
         schemas_result = repository.find_schemas(driver_module, schema_query, **connect_kwargs)
@@ -450,7 +454,7 @@ class UserDbService:
         elif db_type in ["mysql", "mariadb"]:
             return "SHOW DATABASES;"
         elif db_type == "oracle":
-            return "SELECT global_name FROM global_name;"
+            return "SELECT global_name FROM global_name"
         return None
 
     def _get_schema_query(self, db_type: str, db_name: str | None = None) -> str | None:

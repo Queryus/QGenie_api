@@ -163,28 +163,33 @@ class UserDbRepository:
         self, driver_module: Any, db_type: str, database_query: str | None, **kwargs: Any
     ) -> DatabaseListResult:
         connection = None
+        logging.info(f"Attempting to find databases for db_type: '{db_type}' with connection args: {kwargs}")
         try:
             connection = self._connect(driver_module, **kwargs)
             cursor = connection.cursor()
 
             if not database_query:
-                # 현재 연결된 데이터베이스 이름을 가져옵니다.
                 if db_type == DBTypesEnum.sqlite.name:
                     cursor.execute("PRAGMA database_list;")
                     rows = cursor.fetchall()
-                    # SQLite는 'main' 데이터베이스를 기본으로 가집니다.
+                    logging.info(f"SQLite PRAGMA database_list result: {rows}")
                     db_name = next((row[1] for row in rows if row[2] is not None), "main")
+                    logging.info(f"Found SQLite database: {db_name}")
                     return DatabaseListResult(
                         is_successful=True, code=CommonCode.SUCCESS_FIND_DATABASES, databases=[db_name]
                     )
                 else:
-                    # 다른 DB 타입의 경우, 현재 DB를 알 수 없으면 빈 리스트 반환
+                    logging.warning(f"No database query provided for db_type: '{db_type}'. Returning empty list.")
                     return DatabaseListResult(is_successful=True, code=CommonCode.SUCCESS_FIND_DATABASES, databases=[])
 
+            logging.info(f"Executing database query for {db_type}: {database_query}")
             cursor.execute(database_query)
-            databases = [row[0] for row in cursor.fetchall()]
+            rows = cursor.fetchall()
+            logging.info(f"Raw databases found for {db_type}: {rows}")
+            databases = [row[0] for row in rows]
             return DatabaseListResult(is_successful=True, code=CommonCode.SUCCESS_FIND_DATABASES, databases=databases)
-        except Exception:
+        except Exception as e:
+            logging.error(f"Failed to find databases for {db_type}. Error: {e}", exc_info=True)
             return DatabaseListResult(is_successful=False, code=CommonCode.FAIL_FIND_DATABASES, databases=[])
         finally:
             if connection:
