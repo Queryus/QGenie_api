@@ -52,8 +52,12 @@ class UserDbRepository:
             cursor = connection.cursor()
             cursor.execute(sql, data)
             connection.commit()
+
             name = create_db_info.view_name if create_db_info.view_name else create_db_info.type
-            return ChangeProfileResult(is_successful=True, code=CommonCode.SUCCESS_SAVE_PROFILE, view_name=name)
+            id = create_db_info.id
+            data = {"view_name": name, "id": id}
+
+            return ChangeProfileResult(is_successful=True, code=CommonCode.SUCCESS_SAVE_PROFILE, data=data)
         except sqlite3.Error:
             return ChangeProfileResult(is_successful=False, code=CommonCode.FAIL_SAVE_PROFILE)
         except Exception:
@@ -73,8 +77,12 @@ class UserDbRepository:
             cursor = connection.cursor()
             cursor.execute(sql, data)
             connection.commit()
+
             name = update_db_info.view_name if update_db_info.view_name else update_db_info.type
-            return ChangeProfileResult(is_successful=True, code=CommonCode.SUCCESS_UPDATE_PROFILE, view_name=name)
+            id = update_db_info.id
+            data = {"view_name": name, "id": id}
+
+            return ChangeProfileResult(is_successful=True, code=CommonCode.SUCCESS_UPDATE_PROFILE, data=data)
         except sqlite3.Error:
             return ChangeProfileResult(is_successful=False, code=CommonCode.FAIL_UPDATE_PROFILE)
         except Exception:
@@ -99,7 +107,9 @@ class UserDbRepository:
             cursor = connection.cursor()
             cursor.execute(sql, data)
             connection.commit()
-            return ChangeProfileResult(is_successful=True, code=CommonCode.SUCCESS_DELETE_PROFILE, view_name=profile_id)
+
+            data = {"id": profile_id}
+            return ChangeProfileResult(is_successful=True, code=CommonCode.SUCCESS_DELETE_PROFILE, data=data)
         except sqlite3.Error:
             return ChangeProfileResult(is_successful=False, code=CommonCode.FAIL_DELETE_PROFILE)
         except Exception:

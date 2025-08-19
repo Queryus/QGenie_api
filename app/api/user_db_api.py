@@ -34,52 +34,52 @@ def connection_test(
 
 @router.post(
     "/create/profile",
-    response_model=ResponseMessage[str],
+    response_model=ResponseMessage[dict],
     summary="DB 프로필 저장",
 )
 def create_profile(
     create_db_info: UpdateOrCreateDBProfile,
     service: UserDbService = user_db_service_dependency,
-) -> ResponseMessage[str]:
+) -> ResponseMessage[dict]:
     create_db_info.validate_required_fields()
     result = service.create_profile(create_db_info)
 
     if not result.is_successful:
         raise APIException(result.code)
-    return ResponseMessage.success(value=result.view_name, code=result.code)
+    return ResponseMessage.success(value=result.data, code=result.code)
 
 
 @router.put(
     "/modify/profile",
-    response_model=ResponseMessage[str],
+    response_model=ResponseMessage[dict],
     summary="DB 프로필 업데이트",
 )
 def update_profile(
     update_db_info: UpdateOrCreateDBProfile,
     service: UserDbService = user_db_service_dependency,
-) -> ResponseMessage[str]:
+) -> ResponseMessage[dict]:
     update_db_info.validate_required_fields()
     result = service.update_profile(update_db_info)
 
     if not result.is_successful:
         raise APIException(result.code)
-    return ResponseMessage.success(value=result.view_name, code=result.code)
+    return ResponseMessage.success(value=result.data, code=result.code)
 
 
 @router.delete(
     "/remove/{profile_id}",
-    response_model=ResponseMessage[str],
+    response_model=ResponseMessage[dict],
     summary="DB 프로필 삭제",
 )
 def delete_profile(
     profile_id: str,
     service: UserDbService = user_db_service_dependency,
-) -> ResponseMessage[str]:
+) -> ResponseMessage[dict]:
     result = service.delete_profile(profile_id)
 
     if not result.is_successful:
         raise APIException(result.code)
-    return ResponseMessage.success(value=result.view_name, code=result.code)
+    return ResponseMessage.success(value=result.data, code=result.code)
 
 
 @router.get(

@@ -55,10 +55,7 @@ class UserDbService:
         create_db_info.id = generate_prefixed_uuid(DBSaveIdEnum.user_db.value)
         try:
             sql, data = self._get_create_query_and_data(create_db_info)
-            result = repository.create_profile(sql, data, create_db_info)
-            if not result.is_successful:
-                raise APIException(result.code)
-            return result
+            return repository.create_profile(sql, data, create_db_info)
         except APIException:
             raise
         except Exception as e:
@@ -72,10 +69,7 @@ class UserDbService:
         """
         try:
             sql, data = self._get_update_query_and_data(update_db_info)
-            result = repository.update_profile(sql, data, update_db_info)
-            if not result.is_successful:
-                raise APIException(result.code)
-            return result
+            return repository.update_profile(sql, data, update_db_info)
         except APIException:
             raise
         except Exception as e:
@@ -87,10 +81,7 @@ class UserDbService:
         """
         try:
             sql, data = self._get_delete_query_and_data(profile_id)
-            result = repository.delete_profile(sql, data, profile_id)
-            if not result.is_successful:
-                raise APIException(result.code)
-            return result
+            return repository.delete_profile(sql, data, profile_id)
         except APIException:
             raise
         except Exception as e:

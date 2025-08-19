@@ -18,7 +18,9 @@ class BasicResult(BaseModel):
 class ChangeProfileResult(BasicResult):
     """DB 조회 결과를 위한 확장 모델"""
 
-    view_name: str = Field(..., description="저장된 디비명")
+    data: dict = Field(..., description="반환 값")
+    # view_name: str = Field(..., description="저장된 디비명")
+    # id: str | None = Field(None, description="저장된 디비 id")
 
 
 # DB Profile 조회되는 정보를 담는 모델입니다.
