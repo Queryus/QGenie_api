@@ -102,8 +102,14 @@ jobs:
             --hidden-import=sqlalchemy.dialects.mysql.mysqlconnector \
             --hidden-import=sqlalchemy.dialects.postgresql \
             --hidden-import=sqlalchemy.dialects.oracle \
+            --hidden-import=pymysql \
+            --hidden-import=mysql.connector \
+            --hidden-import=psycopg2 \
+            --hidden-import=oracledb \
+            --hidden-import=pyodbc \
             --collect-binaries psycopg2 \
             --collect-binaries oracledb \
+            --collect-binaries pyodbc \
             --onefile \
             --name ${{ env.EXE_NAME }} app/main.py
 
