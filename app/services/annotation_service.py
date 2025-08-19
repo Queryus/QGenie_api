@@ -29,6 +29,7 @@ from app.schemas.annotation.db_model import (
     TableAnnotationInDB,
     TableConstraintInDB,
 )
+from app.schemas.annotation.hierarchical_response_model import HierarchicalDBMSAnnotation
 from app.schemas.annotation.request_model import AnnotationCreateRequest
 from app.schemas.annotation.response_model import AnnotationDeleteResponse, FullAnnotationResponse
 from app.schemas.user_db.db_profile_model import AllDBProfileInfo
@@ -133,6 +134,15 @@ class AnnotationService:
             raise APIException(CommonCode.NO_ANNOTATION_FOR_PROFILE)
 
         return self.get_full_annotation(db_profile.annotation_id)
+
+    def get_hierarchical_annotation_by_db_profile_id(self, db_profile_id: str) -> HierarchicalDBMSAnnotation:
+        """
+        db_profile_id를 기반으로 계층적인 어노테이션 정보를 조회합니다.
+        """
+        annotation = self.repository.find_hierarchical_annotation_by_profile_id(db_profile_id)
+        if not annotation:
+            raise APIException(CommonCode.NO_ANNOTATION_FOR_PROFILE)
+        return annotation
 
     def _prepare_ai_request_body(
         self,
@@ -339,12 +349,15 @@ class AnnotationService:
     ) -> tuple[list[TableConstraintInDB], list[ConstraintColumnInDB]]:
         """
         테이블의 제약조건 및 제약조건 컬럼 어노테이션 모델 리스트를 생성합니다.
+        AI 응답이 아닌 원본 스키마의 모든 제약조건을 기준으로 처리합니다.
         """
         constraint_annos, constraint_col_annos = [], []
-        for const_data in tbl_data.get("constraints", []):
-            original_constraint = next((c for c in original_table.constraints if c.name == const_data["name"]), None)
-            if not original_constraint:
-                continue
+        ai_constraints_lookup = {c["name"]: c for c in tbl_data.get("constraints", [])}
+
+        for original_constraint in original_table.constraints:
+            const_data = ai_constraints_lookup.get(original_constraint.name)
+            annotation = const_data.get("annotation") if const_data else None
+
             const_id = generate_prefixed_uuid(DBSaveIdEnum.table_constraint.value)
             constraint_annos.append(
                 TableConstraintInDB(
@@ -352,7 +365,7 @@ class AnnotationService:
                     table_annotation_id=table_id,
                     name=original_constraint.name,
                     constraint_type=ConstraintTypeEnum(original_constraint.type),
-                    description=const_data.get("annotation"),
+                    description=annotation,
                     ref_table=original_constraint.referenced_table,
                     expression=original_constraint.check_expression,
                     on_update_action=original_constraint.on_update,
