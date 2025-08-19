@@ -16,6 +16,7 @@ from app.schemas.user_db.result_model import (
     ColumnInfo,
     ColumnListResult,
     ConstraintInfo,
+    DatabaseListResult,
     DBProfile,
     IndexInfo,
     SchemaListResult,
@@ -151,6 +152,45 @@ class UserDbRepository:
             raise APIException(CommonCode.FAIL_FIND_PROFILE) from e
         except Exception as e:
             raise APIException(CommonCode.FAIL) from e
+        finally:
+            if connection:
+                connection.close()
+
+    # ─────────────────────────────
+    # 데이터베이스 조회
+    # ─────────────────────────────
+    def find_databases(
+        self, driver_module: Any, db_type: str, database_query: str | None, **kwargs: Any
+    ) -> DatabaseListResult:
+        connection = None
+        logging.info(f"Attempting to find databases for db_type: '{db_type}' with connection args: {kwargs}")
+        try:
+            connection = self._connect(driver_module, **kwargs)
+            cursor = connection.cursor()
+
+            if not database_query:
+                if db_type == DBTypesEnum.sqlite.name:
+                    cursor.execute("PRAGMA database_list;")
+                    rows = cursor.fetchall()
+                    logging.info(f"SQLite PRAGMA database_list result: {rows}")
+                    db_name = next((row[1] for row in rows if row[2] is not None), "main")
+                    logging.info(f"Found SQLite database: {db_name}")
+                    return DatabaseListResult(
+                        is_successful=True, code=CommonCode.SUCCESS_FIND_DATABASES, databases=[db_name]
+                    )
+                else:
+                    logging.warning(f"No database query provided for db_type: '{db_type}'. Returning empty list.")
+                    return DatabaseListResult(is_successful=True, code=CommonCode.SUCCESS_FIND_DATABASES, databases=[])
+
+            logging.info(f"Executing database query for {db_type}: {database_query}")
+            cursor.execute(database_query)
+            rows = cursor.fetchall()
+            logging.info(f"Raw databases found for {db_type}: {rows}")
+            databases = [row[0] for row in rows]
+            return DatabaseListResult(is_successful=True, code=CommonCode.SUCCESS_FIND_DATABASES, databases=databases)
+        except Exception as e:
+            logging.error(f"Failed to find databases for {db_type}. Error: {e}", exc_info=True)
+            return DatabaseListResult(is_successful=False, code=CommonCode.FAIL_FIND_DATABASES, databases=[])
         finally:
             if connection:
                 connection.close()
