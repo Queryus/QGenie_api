@@ -5,12 +5,12 @@ from fastapi import APIRouter
 from app.api import (
     annotation_api,
     api_key_api,
+    chat_messages_api,
     chat_tab_api,
     driver_api,
     query_api,
     test_api,
     user_db_api,
-    chat_messages_api,
 )
 
 api_router = APIRouter()

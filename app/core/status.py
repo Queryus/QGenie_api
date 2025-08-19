@@ -21,9 +21,10 @@ class CommonCode(Enum):
     SUCCESS_DRIVER_INFO = (status.HTTP_200_OK, "2100", "드라이버 정보 조회를 성공하였습니다.")
     SUCCESS_USER_DB_CONNECT_TEST = (status.HTTP_200_OK, "2101", "테스트 연결을 성공하였습니다.")
     SUCCESS_FIND_PROFILE = (status.HTTP_200_OK, "2102", "디비 정보 조회를 성공하였습니다.")
-    SUCCESS_FIND_SCHEMAS = (status.HTTP_200_OK, "2103", "디비 스키마 정보 조회를 성공하였습니다.")
-    SUCCESS_FIND_TABLES = (status.HTTP_200_OK, "2104", "디비 테이블 정보 조회를 성공하였습니다.")
-    SUCCESS_FIND_COLUMNS = (status.HTTP_200_OK, "2105", "디비 컬럼 정보 조회를 성공하였습니다.")
+    SUCCESS_FIND_DATABASES = (status.HTTP_200_OK, "2103", "데이터베이스 정보 조회를 성공하였습니다.")
+    SUCCESS_FIND_SCHEMAS = (status.HTTP_200_OK, "2104", "디비 스키마 정보 조회를 성공하였습니다.")
+    SUCCESS_FIND_TABLES = (status.HTTP_200_OK, "2105", "디비 테이블 정보 조회를 성공하였습니다.")
+    SUCCESS_FIND_COLUMNS = (status.HTTP_200_OK, "2106", "디비 컬럼 정보 조회를 성공하였습니다.")
     SUCCESS_SAVE_PROFILE = (status.HTTP_200_OK, "2130", "디비 연결 정보를 저장하였습니다.")
     SUCCESS_UPDATE_PROFILE = (status.HTTP_200_OK, "2150", "디비 연결 정보를 업데이트 하였습니다.")
     SUCCESS_DELETE_PROFILE = (status.HTTP_200_OK, "2170", "디비 연결 정보를 삭제 하였습니다.")
@@ -136,6 +137,11 @@ class CommonCode(Enum):
     )
     FAIL_FIND_INDEXES = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5108", "디비 인덱스 정보 조회 중 에러가 발생했습니다.")
     FAIL_FIND_SAMPLE_ROWS = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5106", "샘플 데이터 조회 중 에러가 발생했습니다.")
+    FAIL_FIND_DATABASES = (
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "5109",
+        "데이터베이스 정보 조회 중 에러가 발생했습니다.",
+    )
     FAIL_SAVE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5130", "디비 정보 저장 중 에러가 발생했습니다.")
     FAIL_UPDATE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5150", "디비 정보 업데이트 중 에러가 발생했습니다.")
     FAIL_DELETE_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5170", "디비 정보 삭제 중 에러가 발생했습니다.")

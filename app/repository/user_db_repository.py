@@ -16,6 +16,7 @@ from app.schemas.user_db.result_model import (
     ColumnInfo,
     ColumnListResult,
     ConstraintInfo,
+    DatabaseListResult,
     DBProfile,
     IndexInfo,
     SchemaListResult,
@@ -151,6 +152,40 @@ class UserDbRepository:
             raise APIException(CommonCode.FAIL_FIND_PROFILE) from e
         except Exception as e:
             raise APIException(CommonCode.FAIL) from e
+        finally:
+            if connection:
+                connection.close()
+
+    # ─────────────────────────────
+    # 데이터베이스 조회
+    # ─────────────────────────────
+    def find_databases(
+        self, driver_module: Any, db_type: str, database_query: str | None, **kwargs: Any
+    ) -> DatabaseListResult:
+        connection = None
+        try:
+            connection = self._connect(driver_module, **kwargs)
+            cursor = connection.cursor()
+
+            if not database_query:
+                # 현재 연결된 데이터베이스 이름을 가져옵니다.
+                if db_type == DBTypesEnum.sqlite.name:
+                    cursor.execute("PRAGMA database_list;")
+                    rows = cursor.fetchall()
+                    # SQLite는 'main' 데이터베이스를 기본으로 가집니다.
+                    db_name = next((row[1] for row in rows if row[2] is not None), "main")
+                    return DatabaseListResult(
+                        is_successful=True, code=CommonCode.SUCCESS_FIND_DATABASES, databases=[db_name]
+                    )
+                else:
+                    # 다른 DB 타입의 경우, 현재 DB를 알 수 없으면 빈 리스트 반환
+                    return DatabaseListResult(is_successful=True, code=CommonCode.SUCCESS_FIND_DATABASES, databases=[])
+
+            cursor.execute(database_query)
+            databases = [row[0] for row in cursor.fetchall()]
+            return DatabaseListResult(is_successful=True, code=CommonCode.SUCCESS_FIND_DATABASES, databases=databases)
+        except Exception:
+            return DatabaseListResult(is_successful=False, code=CommonCode.FAIL_FIND_DATABASES, databases=[])
         finally:
             if connection:
                 connection.close()

@@ -108,6 +108,10 @@ class ColumnListResult(BasicResult):
     columns: list[ColumnInfo] = Field([], description="컬럼 정보 목록")
 
 
+class DatabaseListResult(BasicResult):
+    databases: list[str] = Field([], description="데이터베이스 이름 목록")
+
+
 # ─────────────────────────────
 # 계층적 스키마 조회를 위한 모델
 # ─────────────────────────────
