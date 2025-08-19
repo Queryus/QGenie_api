@@ -448,6 +448,8 @@ class UserDbService:
                 FROM information_schema.columns
                 WHERE table_schema = %s AND table_name = %s
             """
+        elif db_type == "oracle":
+            return "SELECT column_name FROM user_tab_columns WHERE table_name = :table"
         elif db_type == "sqlite":
             return None
         return None
