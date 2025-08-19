@@ -17,17 +17,27 @@ from app.schemas.chat_message.response_model import ALLChatMessagesResponseByTab
 
 chat_message_repository_dependency = Depends(lambda: chat_message_repository)
 
-AI_SERVER_URL = os.getenv("ENV_AI_SERVER_URL")
+# AI_SERVER_URL = os.getenv("ENV_AI_SERVER_URL")
 
-if not AI_SERVER_URL:
-    raise APIException(CommonCode.FAIL_AI_SERVER_CONNECTION)
-
-url: str = AI_SERVER_URL
+# if not AI_SERVER_URL:
+#     raise APIException(CommonCode.FAIL_AI_SERVER_CONNECTION)
+#
+# url: str = AI_SERVER_URL
 
 
 class ChatMessageService:
     def __init__(self, repository: ChatMessageRepository = chat_message_repository):
         self.repository = repository
+        self._ai_server_url = None
+
+    def _get_ai_server_url(self) -> str:
+        """AI 서버 URL을 한 번만 로드하고 캐싱하여 재사용합니다 (지연 로딩)."""
+        if self._ai_server_url is None:
+            url = os.getenv("ENV_AI_SERVER_URL")
+            if not url:
+                raise ValueError("환경 변수 'ENV_AI_SERVER_URL'가 설정되지 않았거나 .env 파일 로드에 실패했습니다.")
+            self._ai_server_url = url
+        return self._ai_server_url
 
     def get_chat_tab_and_messages_by_id(self, tab_id: str) -> ALLChatMessagesResponseByTab:
         """
@@ -120,11 +130,12 @@ class ChatMessageService:
 
         # 3. AI 서버에 보내는 DATA
         request_body = {"question": latest_message, "chat_history": history}
+        ai_server_url = self._get_ai_server_url()
 
         # 4. AI 서버에 POST 요청
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.post(url, json=request_body, timeout=60.0)
+                response = await client.post(ai_server_url, json=request_body, timeout=60.0)
                 response.raise_for_status()
                 return response.json()
             except httpx.HTTPStatusError as e:
