@@ -10,24 +10,24 @@ from app.core.exceptions import APIException
 from app.core.status import CommonCode
 from app.core.utils import generate_prefixed_uuid
 from app.repository.chat_message_repository import ChatMessageRepository, chat_message_repository
+from app.repository.chat_tab_repository import ChatTabRepository, chat_tab_repository
 from app.schemas.chat_message.base_model import validate_chat_tab_id_format
 from app.schemas.chat_message.db_model import ChatMessageInDB
 from app.schemas.chat_message.request_model import ChatMessagesReqeust
 from app.schemas.chat_message.response_model import ALLChatMessagesResponseByTab, ChatMessagesResponse
 
 chat_message_repository_dependency = Depends(lambda: chat_message_repository)
-
-# AI_SERVER_URL = os.getenv("ENV_AI_SERVER_URL")
-
-# if not AI_SERVER_URL:
-#     raise APIException(CommonCode.FAIL_AI_SERVER_CONNECTION)
-#
-# url: str = AI_SERVER_URL
+chat_tab_repository_dependency = Depends(lambda: chat_tab_repository)
 
 
 class ChatMessageService:
-    def __init__(self, repository: ChatMessageRepository = chat_message_repository):
+    def __init__(
+        self,
+        repository: ChatMessageRepository = chat_message_repository,
+        chat_tab_repo: ChatTabRepository = chat_tab_repository,
+    ):
         self.repository = repository
+        self.chat_tab_repository = chat_tab_repo
         self._ai_server_url = None
 
     def _get_ai_server_url(self) -> str:
@@ -70,6 +70,9 @@ class ChatMessageService:
 
         # 4. AI 서버 응답 저장
         response = self._transform_ai_response_to_db_models(request, ai_response)
+
+        # 5. 채팅 탭의 updated_at 갱신
+        self.chat_tab_repository.update_tab_timestamp(request.chat_tab_id)
 
         # DB 모델을 API 응답 모델로 변환
         response_data = ChatMessagesResponse.model_validate(response)
