@@ -53,7 +53,7 @@ class ChatMessageService:
         except sqlite3.Error as e:
             raise APIException(CommonCode.FAIL) from e
 
-    async def create_chat_message(self, request: ChatMessagesReqeust) -> ChatMessagesResponse:
+    async def create_chat_message(self, request: ChatMessagesReqeust) -> ChatMessageInDB:
         # 1. tab_id, message 유효성 검사 및 유무 확인
         request.validate()
 
@@ -74,10 +74,7 @@ class ChatMessageService:
         # 5. 채팅 탭의 updated_at 갱신
         self.chat_tab_repository.update_tab_timestamp(request.chat_tab_id)
 
-        # DB 모델을 API 응답 모델로 변환
-        response_data = ChatMessagesResponse.model_validate(response)
-
-        return response_data
+        return response
 
     def get_chat_tab_by_id(self, request: ChatMessagesReqeust) -> ChatMessageInDB:
         """특정 채팅 탭 조회"""
