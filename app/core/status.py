@@ -118,7 +118,12 @@ class CommonCode(Enum):
         "5002",
         "데이터 생성 후 검증 과정에서 에러가 발생했습니다.",
     )
-
+    FAIL_AI_SERVER_CONNECTION = (status.HTTP_503_SERVICE_UNAVAILABLE, "5003", "AI 서버 연결에 실패했습니다.")
+    FAIL_AI_SERVER_PROCESSING = (
+        status.HTTP_500_INTERNAL_SERVER_ERROR,
+        "5004",
+        "AI 서버가 요청을 처리하는 데 실패했습니다.",
+    )
     """ DRIVER, DB 서버 에러 코드 - 51xx """
     FAIL_CONNECT_DB = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5100", "디비 연결 중 에러가 발생했습니다.")
     FAIL_FIND_PROFILE = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5101", "디비 정보 조회 중 에러가 발생했습니다.")
@@ -154,12 +159,6 @@ class CommonCode(Enum):
     FAIL_CREATE_ANNOTATION = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5400", "어노테이션 생성 중 에러가 발생했습니다.")
     FAIL_FIND_ANNOTATION = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5401", "어노테이션 조회 중 에러가 발생했습니다.")
     FAIL_DELETE_ANNOTATION = (status.HTTP_500_INTERNAL_SERVER_ERROR, "5402", "어노테이션 삭제 중 에러가 발생했습니다.")
-    FAIL_AI_SERVER_CONNECTION = (status.HTTP_503_SERVICE_UNAVAILABLE, "5403", "AI 서버 연결에 실패했습니다.")
-    FAIL_AI_SERVER_PROCESSING = (
-        status.HTTP_500_INTERNAL_SERVER_ERROR,
-        "5404",
-        "AI 서버가 요청을 처리하는 데 실패했습니다.",
-    )
 
     """ SQL 서버 에러 코드 - 55xx """
 
