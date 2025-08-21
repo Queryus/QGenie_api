@@ -1,5 +1,8 @@
+import logging
 import sqlite3
 
+from app.core.exceptions import APIException
+from app.core.status import CommonCode
 from app.core.utils import get_db_path
 from app.schemas.annotation.db_model import (
     ColumnAnnotationInDB,
@@ -9,6 +12,13 @@ from app.schemas.annotation.db_model import (
     IndexColumnInDB,
     TableAnnotationInDB,
     TableConstraintInDB,
+)
+from app.schemas.annotation.hierarchical_response_model import (
+    HierarchicalColumnAnnotation,
+    HierarchicalDBAnnotation,
+    HierarchicalDBMSAnnotation,
+    HierarchicalRelationshipAnnotation,
+    HierarchicalTableAnnotation,
 )
 from app.schemas.annotation.response_model import (
     ColumnAnnotationDetail,
@@ -99,7 +109,7 @@ class AnnotationRepository:
             (
                 c.id,
                 c.table_annotation_id,
-                c.constraint_type,
+                c.constraint_type.value,
                 c.name,
                 c.description,
                 c.expression,
@@ -275,6 +285,139 @@ class AnnotationRepository:
             db_row_dict = dict(db_row)
             db_row_dict["tables"] = tables_details
             return FullAnnotationResponse.model_validate(db_row_dict)
+        finally:
+            if conn:
+                conn.close()
+
+    def find_hierarchical_annotation_by_profile_id(self, db_profile_id: str) -> HierarchicalDBMSAnnotation | None:
+        """
+        db_profile_id로 계층적 어노테이션 정보를 조회합니다.
+        - DBMS > DB > 테이블 > 컬럼 구조로 데이터를 조립하여 반환합니다.
+        """
+        db_path = get_db_path()
+        conn = None
+        try:
+            conn = sqlite3.connect(str(db_path), timeout=10)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            # 1. 기본 정보 조회 (db_profile, database_annotation)
+            cursor.execute(
+                """
+                SELECT
+                    dp.type as dbms_type,
+                    da.id as annotation_id,
+                    da.db_profile_id,
+                    da.database_name,
+                    da.description as db_description,
+                    da.created_at,
+                    da.updated_at
+                FROM db_profile dp
+                JOIN database_annotation da ON dp.annotation_id = da.id
+                WHERE dp.id = ?
+                """,
+                (db_profile_id,),
+            )
+            base_info = cursor.fetchone()
+            if not base_info:
+                return None
+
+            # 2. 테이블 및 컬럼 정보 한번에 조회
+            cursor.execute(
+                """
+                SELECT
+                    ta.id as table_id,
+                    ta.table_name,
+                    ta.description as table_description,
+                    ca.column_name,
+                    ca.description as column_description,
+                    ca.data_type
+                FROM table_annotation ta
+                JOIN column_annotation ca ON ta.id = ca.table_annotation_id
+                WHERE ta.database_annotation_id = ?
+                ORDER BY ta.table_name, ca.ordinal_position
+                """,
+                (base_info["annotation_id"],),
+            )
+            rows = cursor.fetchall()
+
+            # 3. 데이터 계층 구조로 조립 (테이블, 컬럼)
+            tables_map = {}
+            for row in rows:
+                table_name = row["table_name"]
+                if table_name not in tables_map:
+                    tables_map[table_name] = HierarchicalTableAnnotation(
+                        table_name=table_name,
+                        description=row["table_description"],
+                        columns=[],
+                    )
+                tables_map[table_name].columns.append(
+                    HierarchicalColumnAnnotation(
+                        column_name=row["column_name"],
+                        description=row["column_description"],
+                        data_type=row["data_type"],
+                    )
+                )
+
+            # 4. 관계 정보 조회
+            cursor.execute(
+                """
+                SELECT
+                    ta_from.table_name as from_table,
+                    ca_from.column_name as from_column,
+                    tc.ref_table as to_table,
+                    cc.referenced_column_name as to_column,
+                    tc.name as constraint_name,
+                    tc.description as relationship_description
+                FROM table_constraint tc
+                JOIN table_annotation ta_from ON tc.table_annotation_id = ta_from.id
+                JOIN constraint_column cc ON tc.id = cc.constraint_id
+                JOIN column_annotation ca_from ON cc.column_annotation_id = ca_from.id
+                WHERE ta_from.database_annotation_id = ? AND tc.constraint_type = 'FOREIGN KEY'
+                ORDER BY tc.name, cc.position
+                """,
+                (base_info["annotation_id"],),
+            )
+            relationship_rows = cursor.fetchall()
+            logging.info(f"Raw relationship rows from DB: {[dict(row) for row in relationship_rows]}")
+
+            relationships_map = {}
+            for row in relationship_rows:
+                constraint_name = row["constraint_name"]
+                if constraint_name not in relationships_map:
+                    relationships_map[constraint_name] = {
+                        "from_table": row["from_table"],
+                        "to_table": row["to_table"],
+                        "description": row["relationship_description"],
+                        "from_columns": [],
+                        "to_columns": [],
+                    }
+                relationships_map[constraint_name]["from_columns"].append(row["from_column"])
+                relationships_map[constraint_name]["to_columns"].append(row["to_column"])
+
+            logging.info(f"Processed relationships map: {relationships_map}")
+            relationships = [HierarchicalRelationshipAnnotation(**data) for data in relationships_map.values()]
+            logging.info(f"Final relationships list: {relationships}")
+
+            # 5. 최종 데이터 조립
+            db = HierarchicalDBAnnotation(
+                db_name=base_info["database_name"],
+                description=base_info["db_description"],
+                tables=list(tables_map.values()),
+                relationships=relationships,
+            )
+
+            return HierarchicalDBMSAnnotation(
+                dbms_type=base_info["dbms_type"],
+                databases=[db],
+                annotation_id=base_info["annotation_id"],
+                db_profile_id=base_info["db_profile_id"],
+                created_at=base_info["created_at"],
+                updated_at=base_info["updated_at"],
+            )
+
+        except sqlite3.Error as e:
+            raise APIException(CommonCode.FAIL_FIND_ANNOTATION) from e
         finally:
             if conn:
                 conn.close()

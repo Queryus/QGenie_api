@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 
 from app.core.response import ResponseMessage
 from app.core.status import CommonCode
+from app.schemas.annotation.hierarchical_response_model import HierarchicalDBMSAnnotation
 from app.schemas.annotation.request_model import AnnotationCreateRequest
 from app.schemas.annotation.response_model import AnnotationDeleteResponse, FullAnnotationResponse
 from app.services.annotation_service import AnnotationService, annotation_service
@@ -56,6 +57,22 @@ def get_annotation_by_db_profile_id(
     `db_profile_id`에 연결된 어노테이션의 전체 상세 정보를 조회합니다.
     """
     annotation = service.get_annotation_by_db_profile_id(db_profile_id)
+    return ResponseMessage.success(value=annotation, code=CommonCode.SUCCESS_FIND_ANNOTATION)
+
+
+@router.get(
+    "/find/hierarchical/{db_profile_id}",
+    response_model=ResponseMessage[HierarchicalDBMSAnnotation],
+    summary="DB 프로필 ID로 계층적 어노테이션 조회",
+)
+def get_hierarchical_annotation_by_db_profile_id(
+    db_profile_id: str,
+    service: AnnotationService = annotation_service_dependency,
+) -> ResponseMessage[HierarchicalDBMSAnnotation]:
+    """
+    `db_profile_id`에 연결된 어노테이션을 계층 구조(DBMS > DB > 스키마 > 테이블 > 컬럼)로 조회합니다.
+    """
+    annotation = service.get_hierarchical_annotation_by_db_profile_id(db_profile_id)
     return ResponseMessage.success(value=annotation, code=CommonCode.SUCCESS_FIND_ANNOTATION)
 
 

@@ -56,7 +56,7 @@ class ChatTabRepository:
 
             # 데이터 업데이트
             cursor.execute(
-                "UPDATE chat_tab SET name = ?, updated_at = datetime('now', 'localtime') WHERE id = ?",
+                "UPDATE chat_tab SET name = ?, updated_at = datetime('now') WHERE id = ?",
                 (new_name, id),
             )
             conn.commit()
@@ -69,6 +69,20 @@ class ChatTabRepository:
             updated_row = cursor.fetchone()
 
             return ChatTabInDB.model_validate(dict(updated_row))
+        finally:
+            if conn:
+                conn.close()
+
+    def update_tab_timestamp(self, id: str) -> bool:
+        """지정된 ID의 채팅 탭의 updated_at 타임스탬프를 현재 시간으로 업데이트합니다."""
+        db_path = get_db_path()
+        conn = None
+        try:
+            conn = sqlite3.connect(str(db_path), timeout=10)
+            cursor = conn.cursor()
+            cursor.execute("UPDATE chat_tab SET updated_at = datetime('now') WHERE id = ?", (id,))
+            conn.commit()
+            return cursor.rowcount > 0
         finally:
             if conn:
                 conn.close()

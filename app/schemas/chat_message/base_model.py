@@ -29,4 +29,4 @@ class RequestBase(BaseModel):
     def validate_message(self, field_value: str) -> None:
         """메시지 유효성 검사"""
         if not field_value or field_value.strip() == "":
-            raise APIException(CommonCode.INVALID_ANNOTATION_REQUEST)
+            raise APIException(CommonCode.INVALID_CHAT_MESSAGE_REQUEST)
